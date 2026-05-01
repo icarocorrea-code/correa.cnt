@@ -11,7 +11,7 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 :root{
   --blue:#0866FF; --blue-h:#1877F2; --blue-l:#EBF2FF;
-  --green:#31A24C; --red:#E40303;
+  --green:#31A24C; --red:#E40303; --orange:#F59E0B;
   --bg:#F0F2F5; --surface:#FFFFFF;
   --text:#050505; --muted:#65676B; --subtle:#BCC0C4;
   --border:#E4E6EA; --border-s:#CED0D4;
@@ -99,19 +99,13 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
   width:var(--sidebar);flex-shrink:0;background:var(--surface);
   border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;
 }
-/* sidebar tab bar */
-.sb-tabs{
-  display:flex;border-bottom:1px solid var(--border);flex-shrink:0;
-}
-.sb-tab{
-  flex:1;padding:13px 10px;border:none;background:transparent;
+.sb-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sb-tab{flex:1;padding:13px 10px;border:none;background:transparent;
   font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);
-  cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;
-}
+  cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
 .sb-tab:hover{color:var(--text);background:var(--bg);}
 .sb-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
 
-/* conversas panel */
 #convs-panel{display:flex;flex-direction:column;flex:1;overflow:hidden;}
 .sb-head{padding:12px 16px 8px;display:flex;align-items:center;
   justify-content:space-between;flex-shrink:0;}
@@ -121,7 +115,7 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
   display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1;
   transition:all .15s;}
 .new-btn:hover{background:var(--blue);color:#fff;}
-.sb-search{padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sb-search{padding:8px 12px 0;flex-shrink:0;}
 .search-wrap{position:relative;}
 .search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);
   pointer-events:none;color:var(--subtle);}
@@ -130,6 +124,27 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
   padding:8px 14px 8px 36px;font-family:inherit;font-size:14px;outline:none;color:var(--text);
 }
 .sb-search-input::placeholder{color:var(--subtle);}
+
+/* ── FILTROS DE STATUS ──────────────────────────────────── */
+.filter-bar{
+  display:flex;gap:6px;padding:8px 12px;flex-shrink:0;overflow-x:auto;
+  border-bottom:1px solid var(--border);
+}
+.filter-bar::-webkit-scrollbar{height:0;}
+.filter-btn{
+  padding:4px 12px;border-radius:20px;border:1px solid var(--border);
+  font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;
+  white-space:nowrap;transition:all .15s;background:transparent;color:var(--muted);
+}
+.filter-btn:hover{border-color:var(--blue);color:var(--blue);}
+.filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.filter-count{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.12);border-radius:10px;min-width:16px;height:16px;
+  padding:0 4px;font-size:10px;margin-left:4px;
+}
+.filter-btn.active .filter-count{background:rgba(255,255,255,.25);}
+
 #conv-list,#contact-list{flex:1;overflow-y:auto;}
 #conv-list::-webkit-scrollbar,#contact-list::-webkit-scrollbar{width:3px;}
 #conv-list::-webkit-scrollbar-thumb,#contact-list::-webkit-scrollbar-thumb{
@@ -145,8 +160,17 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
   background:linear-gradient(135deg,#0866FF,#00B4FF);
   display:flex;align-items:center;justify-content:center;
   font-size:16px;font-weight:700;color:#fff;letter-spacing:-1px;
+  position:relative;
 }
 .av.sm{width:36px;height:36px;font-size:12px;}
+.status-dot{
+  position:absolute;bottom:1px;right:1px;
+  width:11px;height:11px;border-radius:50%;border:2px solid var(--surface);
+}
+.status-dot.open    {background:var(--green);}
+.status-dot.pending {background:var(--orange);}
+.status-dot.resolved{background:var(--subtle);}
+
 .conv-info,.contact-info{flex:1;min-width:0;}
 .conv-name,.contact-name{font-size:15px;font-weight:600;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -166,7 +190,6 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
 .contact-item .edit-btn:hover{background:var(--bg);color:var(--text);}
 .sb-empty{padding:48px 20px;text-align:center;color:var(--muted);font-size:14px;line-height:1.7;}
 
-/* contacts panel */
 #contacts-panel{display:none;flex-direction:column;flex:1;overflow:hidden;}
 #contacts-panel.active{display:flex;}
 
@@ -195,7 +218,14 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
 .hdr-info{flex:1;}
 .hdr-name{font-size:15px;font-weight:700;}
 .hdr-phone{font-size:12px;color:var(--muted);margin-top:1px;}
-.hdr-acts{display:flex;gap:2px;}
+.hdr-acts{display:flex;align-items:center;gap:6px;}
+.hdr-status{
+  border:1px solid var(--border);background:var(--bg);border-radius:20px;
+  padding:5px 10px;font-family:inherit;font-size:12px;font-weight:600;
+  cursor:pointer;outline:none;color:var(--text);transition:all .15s;
+}
+.hdr-status:hover{border-color:var(--blue);}
+.hdr-status option{font-weight:600;}
 .ico-btn{width:36px;height:36px;border:none;background:transparent;border-radius:8px;
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   color:var(--muted);transition:all .15s;}
@@ -227,14 +257,10 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
 .bubble.in .btime{text-align:left;}
 
 /* ── ÁUDIO BUBBLE ───────────────────────────────────────── */
-.audio-bubble{
-  display:flex;align-items:center;gap:10px;
-  min-width:200px;max-width:260px;
-}
+.audio-bubble{display:flex;align-items:center;gap:10px;min-width:200px;max-width:260px;}
 .audio-play-btn{
   width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  transition:all .15s;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;
 }
 .bubble.out .audio-play-btn{background:rgba(255,255,255,.25);color:#fff;}
 .bubble.out .audio-play-btn:hover{background:rgba(255,255,255,.4);}
@@ -243,9 +269,8 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
 .audio-play-btn svg{width:16px;height:16px;fill:currentColor;stroke:none;}
 .audio-track{flex:1;}
 .audio-bar{
-  width:100%;height:4px;border-radius:2px;
-  background:rgba(255,255,255,.3);cursor:pointer;margin-bottom:5px;
-  appearance:none;outline:none;
+  width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.3);
+  cursor:pointer;margin-bottom:5px;appearance:none;outline:none;
 }
 .bubble.in .audio-bar{background:var(--border);}
 .audio-bar::-webkit-slider-thumb{appearance:none;width:12px;height:12px;
@@ -254,10 +279,27 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
 .audio-duration{font-size:11px;opacity:.7;}
 .audio-player-hidden{display:none;}
 
+/* ── IMAGEM BUBBLE ──────────────────────────────────────── */
+.img-bubble{
+  max-width:220px;border-radius:12px;display:block;cursor:zoom-in;
+  margin-bottom:4px;object-fit:cover;
+}
+.img-bubble:hover{opacity:.92;}
+
+/* ── EMOJI POPUP ────────────────────────────────────────── */
+#emoji-popup{
+  position:absolute;bottom:68px;left:56px;z-index:300;
+  display:none;
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,.18),0 0 0 1px var(--border);
+}
+#emoji-popup emoji-picker{--border-radius:0;}
+
 /* ── INPUT AREA ─────────────────────────────────────────── */
 #input-area{
   background:var(--surface);border-top:1px solid var(--border);
   padding:10px 14px;display:flex;align-items:flex-end;gap:8px;flex-shrink:0;
+  position:relative;
 }
 .inp-ico{
   width:38px;height:38px;border-radius:50%;border:none;background:transparent;
@@ -266,6 +308,7 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
 }
 .inp-ico:hover{color:var(--blue);background:var(--blue-l);}
 .inp-ico.recording{color:#fff!important;background:var(--red)!important;animation:pulse 1s infinite;}
+.inp-ico.active{color:var(--blue);background:var(--blue-l);}
 @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
 .inp-ico svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:2;
   stroke-linecap:round;stroke-linejoin:round;}
@@ -286,6 +329,32 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
 #send-btn.on{opacity:1;transform:scale(1);}
 #send-btn:hover.on{background:var(--blue-h);}
 #send-btn svg{width:18px;height:18px;fill:#fff;margin-left:2px;}
+
+/* ── RESPOSTAS RÁPIDAS ──────────────────────────────────── */
+#quick-popup{
+  position:absolute;bottom:68px;left:56px;right:56px;z-index:300;
+  background:var(--surface);border-radius:12px;overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,0,0,.14),0 0 0 1px var(--border);
+  display:none;max-height:180px;overflow-y:auto;
+}
+.qr-item{
+  padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--border);
+  transition:background .1s;
+}
+.qr-item:last-child{border-bottom:none;}
+.qr-item:hover{background:var(--bg);}
+.qr-key{font-size:12px;font-weight:700;color:var(--blue);margin-right:8px;}
+.qr-text{font-size:13px;color:var(--text);}
+
+/* ── LIGHTBOX ───────────────────────────────────────────── */
+#lightbox{
+  position:fixed;inset:0;z-index:9998;
+  background:rgba(0,0,0,.88);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;
+  cursor:zoom-out;
+}
+#lightbox img{max-width:90vw;max-height:90vh;border-radius:8px;
+  box-shadow:0 16px 48px rgba(0,0,0,.4);}
 
 /* ── MODAIS ─────────────────────────────────────────────── */
 .modal-bg{
@@ -382,7 +451,6 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
 
     <!-- SIDEBAR -->
     <aside id="sidebar">
-      <!-- Tabs: Conversas / Contatos -->
       <div class="sb-tabs">
         <button class="sb-tab active" id="tab-convs"
                 onclick="setSbTab('convs')">Conversas</button>
@@ -401,12 +469,30 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round"
                  stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input id="search" class="sb-search-input" type="search"
                    placeholder="Buscar conversas...">
           </div>
+        </div>
+        <!-- Filtros de status -->
+        <div class="filter-bar">
+          <button class="filter-btn active" id="filter-all"
+                  onclick="setFilter('all')">
+            Todos <span class="filter-count" id="fc-all">0</span>
+          </button>
+          <button class="filter-btn" id="filter-open"
+                  onclick="setFilter('open')">
+            Abertos <span class="filter-count" id="fc-open">0</span>
+          </button>
+          <button class="filter-btn" id="filter-pending"
+                  onclick="setFilter('pending')">
+            Pendentes <span class="filter-count" id="fc-pending">0</span>
+          </button>
+          <button class="filter-btn" id="filter-resolved"
+                  onclick="setFilter('resolved')">
+            Resolvidos <span class="filter-count" id="fc-resolved">0</span>
+          </button>
         </div>
         <div id="conv-list">
           <div class="sb-empty">Nenhuma conversa.<br>Conecte o WhatsApp para começar.</div>
@@ -424,8 +510,7 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round"
                  stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input id="contact-search" class="sb-search-input" type="search"
                    placeholder="Buscar contatos...">
@@ -458,6 +543,13 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
             <div class="hdr-phone" id="hdr-phone"></div>
           </div>
           <div class="hdr-acts">
+            <select class="hdr-status" id="hdr-status"
+                    onchange="setConvStatus(window._activePhone, this.value)"
+                    title="Status da conversa">
+              <option value="open">🟢 Aberto</option>
+              <option value="pending">🟡 Pendente</option>
+              <option value="resolved">⚪ Resolvido</option>
+            </select>
             <button class="ico-btn" title="Editar contato"
                     onclick="openEditContact(window._activePhone)">
               <svg viewBox="0 0 24 24">
@@ -465,18 +557,17 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
                 <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
             </button>
-            <button class="ico-btn" title="Mais opções">
-              <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="5"  r="1.2" fill="currentColor" stroke="none"/>
-                <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>
-                <circle cx="12" cy="19" r="1.2" fill="currentColor" stroke="none"/>
-              </svg>
-            </button>
           </div>
         </div>
 
         <!-- Messages -->
         <div id="msgs"></div>
+
+        <!-- Emoji popup (posicionado dentro do input-area via CSS absolute) -->
+        <div id="emoji-popup"></div>
+
+        <!-- Quick replies popup -->
+        <div id="quick-popup"></div>
 
         <!-- Input -->
         <div id="input-area">
@@ -489,8 +580,9 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
           </button>
           <textarea id="msg-input" rows="1" placeholder="Mensagem..."
                     onkeydown="onMsgKey(event)"
-                    oninput="resizeTA(this);toggleSend(this)"></textarea>
-          <button class="inp-ico" title="Emoji">
+                    oninput="onInputChange(this)"></textarea>
+          <button class="inp-ico" id="emoji-btn" title="Emoji"
+                  onclick="toggleEmoji(event)">
             <svg viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"/>
               <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
@@ -537,6 +629,11 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
   </div>
 </div>
 
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="document.getElementById('lightbox').style.display='none'">
+  <img id="lightbox-img" src="" alt="">
+</div>
+
 <!-- TOAST -->
 <div id="toast"></div>
 
@@ -545,8 +642,11 @@ html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, addDoc, setDoc,
-         onSnapshot, query, orderBy, serverTimestamp }
+         onSnapshot, query, orderBy, serverTimestamp, writeBatch, Timestamp }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ── Emoji picker ─────────────────────────────────────────── */
+import 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js';
 
 const cfg = {
   apiKey:            "AIzaSyBz5ktXOZD8hAYPzDlp8eSQsJL4nsjNt_E",
@@ -556,18 +656,34 @@ const cfg = {
   messagingSenderId: "406389265513",
   appId:             "1:406389265513:web:0035ad188adf89ddc1fef8"
 };
-const app = initializeApp(cfg);
-const db  = getFirestore(app);
+const fbApp = initializeApp(cfg);
+const db    = getFirestore(fbApp);
 
-// Expõe funções Firebase globalmente
-window._db     = db;
-window._fbAdd  = addDoc;
-window._fbSet  = setDoc;
-window._fbCol  = collection;
-window._fbDoc  = doc;
-window._fbTs   = serverTimestamp;
+window._db          = db;
+window._fbAdd       = addDoc;
+window._fbSet       = setDoc;
+window._fbCol       = collection;
+window._fbDoc       = doc;
+window._fbTs        = serverTimestamp;
+window._fbBatch     = () => writeBatch(db);
+window._fbTimestamp = Timestamp;
 
-// ── Listener: mensagens ──────────────────────────────────────
+/* ── Emoji picker init ───────────────────────────────────── */
+const picker = document.createElement('emoji-picker');
+picker.setAttribute('locale', 'pt');
+document.getElementById('emoji-popup').appendChild(picker);
+picker.addEventListener('emoji-click', e => {
+  const inp   = document.getElementById('msg-input');
+  const start = inp.selectionStart ?? inp.value.length;
+  const end   = inp.selectionEnd   ?? inp.value.length;
+  const emoji = e.detail.unicode;
+  inp.value   = inp.value.slice(0, start) + emoji + inp.value.slice(end);
+  inp.selectionStart = inp.selectionEnd = start + emoji.length;
+  inp.dispatchEvent(new Event('input'));
+  inp.focus();
+});
+
+/* ── Listener: mensagens ───────────────────────────────── */
 const qMsgs = query(collection(db, 'wpp_messages'), orderBy('createdAt', 'asc'));
 onSnapshot(qMsgs, snap => {
   window._msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -575,19 +691,20 @@ onSnapshot(qMsgs, snap => {
   if (window._activePhone) renderMsgs(window._activePhone);
 });
 
-// ── Listener: contatos ───────────────────────────────────────
+/* ── Listener: contatos ────────────────────────────────── */
 onSnapshot(collection(db, 'wpp_contacts'), snap => {
   window._contacts = {};
   snap.docs.forEach(d => { window._contacts[d.id] = { id: d.id, ...d.data() }; });
   buildConvs();
   renderContactList();
-  // Atualiza header se houver conversa aberta
   if (window._activePhone) {
     const c = window._contacts[window._activePhone];
     if (c) {
       const name = c.name || c.pushName || fmtPhone(window._activePhone);
-      document.getElementById('hdr-name').textContent  = name;
-      document.getElementById('hdr-av').textContent    = initials(name);
+      document.getElementById('hdr-name').textContent = name;
+      document.getElementById('hdr-av').textContent   = initials(name);
+      const sel = document.getElementById('hdr-status');
+      if (sel) sel.value = c.status || 'open';
     }
   }
 });
@@ -596,19 +713,31 @@ onSnapshot(collection(db, 'wpp_contacts'), snap => {
 <!-- ═══════════ APP LOGIC ════════════════════════════════════ -->
 <script>
 // ── Estado ───────────────────────────────────────────────────
-let _srv  = 'http://localhost:3000';
-let _sock = null;
+let _srv           = 'http://localhost:3000';
+let _sock          = null;
+let _statusFilter  = 'all';
 window._activePhone = null;
 window._msgs        = [];
 window._convs       = {};
 window._contacts    = {};
 
+// Respostas rápidas (chave: '/nome', texto completo)
+const _tmpls = JSON.parse(localStorage.getItem('_tmpls') || '[]');
+
 // ── Sidebar tabs ─────────────────────────────────────────────
 window.setSbTab = function(tab) {
   document.getElementById('tab-convs').classList.toggle('active', tab === 'convs');
   document.getElementById('tab-contacts').classList.toggle('active', tab === 'contacts');
-  document.getElementById('convs-panel').style.display    = tab === 'convs'    ? '' : 'none';
+  document.getElementById('convs-panel').style.display = tab === 'convs' ? '' : 'none';
   document.getElementById('contacts-panel').classList.toggle('active', tab === 'contacts');
+};
+
+// ── Filtro de status ──────────────────────────────────────────
+window.setFilter = function(f) {
+  _statusFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b =>
+    b.classList.toggle('active', b.id === 'filter-' + f));
+  renderConvList();
 };
 
 // ── Conexão com o servidor ───────────────────────────────────
@@ -634,22 +763,20 @@ window.connectServer = function() {
   });
 
   _sock.on('status', s => {
-    if      (s === 'connected')   onConnected();
+    if      (s === 'connected')    onConnected();
     else if (s === 'disconnected') onDisconnected();
     else if (s === 'waiting_qr')   setBadge('scanning', 'Escaneie com o WhatsApp');
   });
 
   _sock.on('phone', p => {
     const el = document.getElementById('tb-phone');
-    el.textContent = '+' + p.replace(/\D/g,'');
+    el.textContent = '+' + p.replace(/\D/g, '');
     el.style.display = '';
   });
 
-  // Mensagem recebida → salvar no Firestore
+  // ── Mensagem em tempo real → Firestore ──────────────────────
   _sock.on('new_message', async msg => {
     if (!window._db) return;
-
-    // 1. Salvar mensagem
     await window._fbAdd(window._fbCol(window._db, 'wpp_messages'), {
       phone:     msg.phoneId,
       pushName:  msg.pushName || '',
@@ -661,17 +788,61 @@ window.connectServer = function() {
       status:    'received',
       createdAt: window._fbTs()
     });
-
-    // 2. Auto-salvar / atualizar contato
     if (msg.phoneId) {
-      const contactRef = window._fbDoc(window._db, 'wpp_contacts', msg.phoneId);
-      await window._fbSet(contactRef, {
+      const cRef = window._fbDoc(window._db, 'wpp_contacts', msg.phoneId);
+      await window._fbSet(cRef, {
         phone:    msg.phoneId,
         pushName: msg.pushName || '',
         name:     (window._contacts[msg.phoneId]?.name) || msg.pushName || '',
         lastSeen: window._fbTs()
       }, { merge: true });
     }
+    // Som de notificação
+    if (window._activePhone !== msg.phoneId) playNotif();
+  });
+
+  // ── Histórico de 7 dias → writeBatch com deduplicação ───────
+  _sock.on('message_history', async history => {
+    if (!window._db || !window._fbBatch || !history?.length) return;
+    showToast(`Sincronizando ${history.length} mensagens do histórico...`);
+
+    const CHUNK = 440;
+    for (let i = 0; i < history.length; i += CHUNK) {
+      const batch  = window._fbBatch();
+      const slice  = history.slice(i, i + CHUNK);
+      const seen   = new Set();
+
+      slice.forEach(m => {
+        if (!m.msgId || !m.phoneId) return;
+        if (seen.has(m.msgId)) return;
+        seen.add(m.msgId);
+
+        const ref = window._fbDoc(window._db, 'wpp_messages', m.msgId);
+        batch.set(ref, {
+          phone:     m.phoneId,
+          pushName:  m.pushName || '',
+          text:      m.text     || '',
+          type:      m.type     || 'text',
+          mediaUrl:  '',
+          direction: m.direction || 'in',
+          status:    m.direction === 'out' ? 'sent' : 'received',
+          createdAt: window._fbTimestamp.fromMillis(m.timestamp || Date.now())
+        }, { merge: true });
+
+        if (m.pushName) {
+          const cRef = window._fbDoc(window._db, 'wpp_contacts', m.phoneId);
+          batch.set(cRef, {
+            phone:    m.phoneId,
+            pushName: m.pushName,
+            name:     window._contacts[m.phoneId]?.name || m.pushName,
+            lastSeen: window._fbTimestamp.fromMillis(m.timestamp || Date.now())
+          }, { merge: true });
+        }
+      });
+
+      await batch.commit();
+    }
+    showToast(`Histórico carregado: ${history.length} mensagens`);
   });
 };
 
@@ -700,6 +871,16 @@ function showQRSpin(msg) {
     `<div class="qr-spin-wrap"><div class="qr-spin"></div><span>${esc(msg)}</span></div>`;
 }
 
+// ── Status da conversa ────────────────────────────────────────
+window.setConvStatus = async function(phone, status) {
+  if (!phone || !window._db) return;
+  await window._fbSet(
+    window._fbDoc(window._db, 'wpp_contacts', phone),
+    { status }, { merge: true }
+  );
+  renderConvList();
+};
+
 // ── Conversas ────────────────────────────────────────────────
 function buildConvs() {
   const map = {};
@@ -710,6 +891,21 @@ function buildConvs() {
     if (m.direction === 'in' && !m.read) map[p].unread++;
   });
   window._convs = map;
+
+  // Atualizar contagens de filtro
+  const all  = Object.keys(map).length;
+  let open = 0, pend = 0, res = 0;
+  Object.keys(map).forEach(p => {
+    const s = window._contacts[p]?.status || 'open';
+    if      (s === 'open')     open++;
+    else if (s === 'pending')  pend++;
+    else if (s === 'resolved') res++;
+  });
+  document.getElementById('fc-all').textContent      = all;
+  document.getElementById('fc-open').textContent     = open;
+  document.getElementById('fc-pending').textContent  = pend;
+  document.getElementById('fc-resolved').textContent = res;
+
   renderConvList();
 }
 
@@ -723,10 +919,18 @@ function contactName(phone) {
 function renderConvList() {
   const list  = document.getElementById('conv-list');
   const q     = document.getElementById('search').value.toLowerCase();
-  const convs = Object.values(window._convs);
+  let convs   = Object.values(window._convs);
+
+  // Filtro de status
+  if (_statusFilter !== 'all') {
+    convs = convs.filter(c => {
+      const s = window._contacts[c.phone]?.status || 'open';
+      return s === _statusFilter;
+    });
+  }
 
   if (!convs.length) {
-    list.innerHTML = '<div class="sb-empty">Nenhuma conversa.<br>Conecte o WhatsApp para começar.</div>';
+    list.innerHTML = '<div class="sb-empty">Nenhuma conversa aqui.<br>Conecte o WhatsApp para começar.</div>';
     return;
   }
 
@@ -737,8 +941,7 @@ function renderConvList() {
   });
 
   const items = q
-    ? sorted.filter(c => contactName(c.phone).toLowerCase().includes(q) ||
-                         c.phone.includes(q))
+    ? sorted.filter(c => contactName(c.phone).toLowerCase().includes(q) || c.phone.includes(q))
     : sorted;
 
   list.innerHTML = items.map(c => {
@@ -748,13 +951,18 @@ function renderConvList() {
     const time   = last?.createdAt ? fmtTime(last.createdAt) : '';
     const prev   = last
       ? (last.direction === 'out' ? '↗ ' : '') +
-        (last.type === 'audio' ? '🎤 Áudio' : (last.text || ''))
+        (last.type === 'audio' ? '🎤 Áudio' :
+         last.type === 'image' ? '📷 Imagem' : (last.text || ''))
       : '';
+    const st     = window._contacts[c.phone]?.status || 'open';
     const active = window._activePhone === c.phone ? ' active' : '';
     const badge  = c.unread > 0 ? `<div class="conv-badge">${c.unread}</div>` : '';
     return `
       <div class="conv-item${active}" onclick="selectConv('${c.phone}')">
-        <div class="av">${ini}</div>
+        <div class="av">
+          ${ini}
+          <span class="status-dot ${st}"></span>
+        </div>
         <div class="conv-info">
           <div class="conv-name">${esc(name)}</div>
           <div class="conv-prev">${esc(prev.slice(0, 60))}</div>
@@ -777,7 +985,7 @@ function renderContactList() {
     return;
   }
 
-  const sorted  = all.sort((a, b) => (a.name || a.pushName || '').localeCompare(b.name || b.pushName || ''));
+  const sorted   = all.sort((a, b) => (a.name || a.pushName || '').localeCompare(b.name || b.pushName || ''));
   const filtered = q ? sorted.filter(c =>
     (c.name || c.pushName || '').toLowerCase().includes(q) || (c.phone||'').includes(q)
   ) : sorted;
@@ -805,11 +1013,13 @@ window.selectConv = function(phone) {
   document.getElementById('hdr-av').textContent    = initials(name);
   document.getElementById('hdr-name').textContent  = name;
   document.getElementById('hdr-phone').textContent = fmtPhone(phone);
+  const st = window._contacts[phone]?.status || 'open';
+  document.getElementById('hdr-status').value = st;
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('active-chat').style.display = 'flex';
   renderMsgs(phone);
   renderConvList();
-  // voltar para aba conversas ao abrir chat
+  closeEmoji();
   if (document.getElementById('contacts-panel').classList.contains('active'))
     setSbTab('convs');
 };
@@ -819,17 +1029,20 @@ function renderMsgs(phone) {
   const msgs = window._convs[phone]?.msgs || [];
   const area = document.getElementById('msgs');
   if (!area) return;
-  const name = contactName(phone);
-  const ini  = initials(name);
-  let html    = '';
+  const atBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 80;
+  const name  = contactName(phone);
+  const ini   = initials(name);
+  let html     = '';
   let lastDate = '';
   let prevDir  = null;
 
   msgs.forEach((m, i) => {
-    const ts   = m.createdAt ? new Date(m.createdAt.seconds * 1000) : new Date();
+    const ts   = m.createdAt?.seconds
+      ? new Date(m.createdAt.seconds * 1000)
+      : (m.createdAt?.toDate ? m.createdAt.toDate() : new Date());
     const dStr = ts.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
     if (dStr !== lastDate) {
-      html += `<div class="date-sep"><span>${dStr}</span></div>`;
+      html    += `<div class="date-sep"><span>${dStr}</span></div>`;
       lastDate = dStr;
     }
     const out    = m.direction === 'out';
@@ -837,7 +1050,6 @@ function renderMsgs(phone) {
     const showAv = !out && (prevDir !== 'in' || i === 0);
     prevDir = m.direction;
 
-    // Conteúdo da bolha
     let content = '';
     if (m.type === 'audio' && m.mediaUrl) {
       const aid = 'a' + m.id.replace(/[^a-z0-9]/gi, '');
@@ -861,6 +1073,13 @@ function renderMsgs(phone) {
                  onended="onAudioEnd('${aid}')"
                  ontimeupdate="onAudioProgress('${aid}')"></audio>
         </div>`;
+    } else if (m.type === 'image' && m.mediaUrl) {
+      const caption = m.text && m.text !== '[Imagem]' ? `<span>${esc(m.text)}</span><br>` : '';
+      content = `<img class="img-bubble"
+                      src="${m.mediaUrl}"
+                      alt="Imagem"
+                      onclick="openLightbox('${m.mediaUrl}')"
+                      onerror="this.style.display='none'">${caption}`;
     } else {
       content = esc(m.text || '');
     }
@@ -876,8 +1095,14 @@ function renderMsgs(phone) {
   });
 
   area.innerHTML = html;
-  area.scrollTop = area.scrollHeight;
+  if (atBottom || msgs.length < 5) area.scrollTop = area.scrollHeight;
 }
+
+// ── Lightbox ──────────────────────────────────────────────────
+window.openLightbox = function(url) {
+  document.getElementById('lightbox-img').src = url;
+  document.getElementById('lightbox').style.display = 'flex';
+};
 
 // ── Controles de áudio ────────────────────────────────────────
 window.toggleAudio = function(aid) {
@@ -885,7 +1110,6 @@ window.toggleAudio = function(aid) {
   const ico = document.getElementById(aid + '-ico');
   if (!el) return;
   if (el.paused) {
-    // Pausa todos os outros
     document.querySelectorAll('audio.audio-player-hidden').forEach(a => {
       if (a.id !== aid && !a.paused) {
         a.pause();
@@ -919,12 +1143,12 @@ window.onAudioProgress = function(aid) {
 };
 window.seekAudio = function(aid, val) {
   const el = document.getElementById(aid);
-  if (el) el.currentTime = val;
+  if (el) el.currentTime = parseFloat(val);
 };
 
 // ── Gravação de áudio ─────────────────────────────────────────
-let _recorder     = null;
-let _audioChunks  = [];
+let _recorder    = null;
+let _audioChunks = [];
 
 window.toggleRecording = async function() {
   if (_recorder && _recorder.state === 'recording') {
@@ -938,7 +1162,6 @@ window.toggleRecording = async function() {
                     ? 'audio/webm;codecs=opus' : 'audio/webm';
     _recorder    = new MediaRecorder(stream, { mimeType: mime });
     _audioChunks = [];
-
     _recorder.ondataavailable = e => { if (e.data.size > 0) _audioChunks.push(e.data); };
     _recorder.onstop = async () => {
       stream.getTracks().forEach(t => t.stop());
@@ -947,7 +1170,6 @@ window.toggleRecording = async function() {
       const base64 = await blobToBase64(blob);
       await sendAudio(window._activePhone, base64.split(',')[1], mime);
     };
-
     _recorder.start();
     document.getElementById('mic-btn').classList.add('recording');
     showToast('Gravando... clique no microfone para parar.');
@@ -979,12 +1201,74 @@ async function sendAudio(phone, audioBase64, mimetype) {
 
 function blobToBase64(blob) {
   return new Promise((res, rej) => {
-    const r = new FileReader();
+    const r  = new FileReader();
     r.onload = () => res(r.result);
     r.onerror = rej;
     r.readAsDataURL(blob);
   });
 }
+
+// ── Emoji ─────────────────────────────────────────────────────
+window.toggleEmoji = function(e) {
+  e.stopPropagation();
+  const popup = document.getElementById('emoji-popup');
+  const isOpen = popup.style.display === 'block';
+  popup.style.display = isOpen ? 'none' : 'block';
+  document.getElementById('emoji-btn').classList.toggle('active', !isOpen);
+};
+function closeEmoji() {
+  document.getElementById('emoji-popup').style.display = 'none';
+  document.getElementById('emoji-btn').classList.remove('active');
+}
+document.addEventListener('click', e => {
+  const popup = document.getElementById('emoji-popup');
+  if (popup.style.display === 'block' &&
+      !popup.contains(e.target) &&
+      e.target.id !== 'emoji-btn' &&
+      !e.target.closest('#emoji-btn')) {
+    closeEmoji();
+  }
+});
+
+// ── Quick replies ─────────────────────────────────────────────
+function showQuickReplies(q) {
+  const popup = document.getElementById('quick-popup');
+  const matches = _tmpls.filter(t => t.key.startsWith(q));
+  if (!matches.length) { popup.style.display = 'none'; return; }
+  popup.innerHTML = matches.map(t =>
+    `<div class="qr-item" onclick="applyQuickReply('${esc(t.text)}')">
+       <span class="qr-key">${esc(t.key)}</span>
+       <span class="qr-text">${esc(t.text.slice(0,60))}</span>
+     </div>`
+  ).join('');
+  popup.style.display = 'block';
+}
+window.applyQuickReply = function(text) {
+  const inp = document.getElementById('msg-input');
+  inp.value = text;
+  inp.style.height = 'auto';
+  inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
+  document.getElementById('send-btn').classList.add('on');
+  document.getElementById('quick-popup').style.display = 'none';
+  inp.focus();
+};
+
+// ── Input ─────────────────────────────────────────────────────
+window.onInputChange = function(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  document.getElementById('send-btn').classList.toggle('on', el.value.trim().length > 0);
+  const v = el.value;
+  if (v.startsWith('/') && v.length > 1) showQuickReplies(v);
+  else document.getElementById('quick-popup').style.display = 'none';
+};
+window.onMsgKey = e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+  if (e.key === 'Escape') {
+    document.getElementById('quick-popup').style.display = 'none';
+    closeEmoji();
+  }
+};
 
 // ── Enviar texto ──────────────────────────────────────────────
 window.sendMsg = async function() {
@@ -992,11 +1276,10 @@ window.sendMsg = async function() {
   const text = inp.value.trim();
   if (!text || !window._activePhone) return;
   if (!_sock?.connected) { showToast('WhatsApp não conectado.'); return; }
-
   inp.value = '';
   inp.style.height = '';
   document.getElementById('send-btn').classList.remove('on');
-
+  document.getElementById('quick-popup').style.display = 'none';
   try {
     const r = await fetch(_srv + '/api/send', {
       method: 'POST',
@@ -1014,10 +1297,6 @@ window.sendMsg = async function() {
   } catch (e) { showToast('Erro: ' + e.message); }
 };
 
-window.onMsgKey   = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }};
-window.resizeTA   = el => { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; };
-window.toggleSend = el => { document.getElementById('send-btn').classList.toggle('on', el.value.trim().length > 0); };
-
 // ── Modal: Nova conversa ──────────────────────────────────────
 window.openNC  = () => document.getElementById('nc-modal').classList.add('open');
 window.closeNC = () => {
@@ -1027,9 +1306,8 @@ window.closeNC = () => {
 };
 window.startNC = async () => {
   const name  = document.getElementById('nc-name').value.trim();
-  const phone = document.getElementById('nc-phone').value.replace(/\D/g,'');
+  const phone = document.getElementById('nc-phone').value.replace(/\D/g, '');
   if (!phone) { showToast('Informe o número.'); return; }
-  // Salvar contato no Firestore
   if (window._db) {
     await window._fbSet(window._fbDoc(window._db, 'wpp_contacts', phone), {
       phone, name: name || '', pushName: '', lastSeen: window._fbTs()
@@ -1063,17 +1341,28 @@ window.saveEdit  = async () => {
 document.getElementById('search').addEventListener('input', renderConvList);
 document.getElementById('contact-search').addEventListener('input', renderContactList);
 
+// ── Som de notificação ────────────────────────────────────────
+function playNotif() {
+  try {
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .25);
+    osc.start(); osc.stop(ctx.currentTime + .25);
+  } catch (_) {}
+}
+
 // ── Helpers ───────────────────────────────────────────────────
 function fmtPhone(p) {
   if (!p) return '—';
   const d = String(p).replace(/\D/g, '');
-  // Brasil: 55 + DDD (2) + 9 dígitos = 13
   if (d.startsWith('55') && d.length === 13)
     return `+55 (${d.slice(2,4)}) ${d.slice(4,9)}-${d.slice(9)}`;
-  // Brasil: 55 + DDD (2) + 8 dígitos = 12
   if (d.startsWith('55') && d.length === 12)
     return `+55 (${d.slice(2,4)}) ${d.slice(4,8)}-${d.slice(8)}`;
-  // Internacional genérico
   if (d.length > 10) return `+${d.slice(0,2)} ${d.slice(2)}`;
   return '+' + d;
 }
@@ -1087,7 +1376,7 @@ function fmtTime(ts) {
   return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
 }
 function fmtDur(s) {
-  const m = Math.floor(s / 60), sec = s % 60;
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
   return `${m}:${String(sec).padStart(2,'0')}`;
 }
 function initials(name) {
@@ -1102,9 +1391,11 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3500);
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3500);
 }
 window.showToast = showToast;
+window.fmtPhone  = fmtPhone;
 
 // Auto-connect
 connectServer();
