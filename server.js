@@ -1,21 +1,36 @@
 /**
  * server.js — Backend WhatsApp para Corrêa CRM
- * Usa @whiskeysockets/baileys para conectar ao WhatsApp Web (sem API paga).
- * A sessão é salva em ./auth_info — não delete esta pasta após conectar.
+ *
+ * Nota sobre LID (@lid):
+ *   WhatsApp (2024+) usa IDs de privacidade (@lid) em vez do número real
+ *   no JID. Por isso sempre salvamos `pushName` (nome do contato no celular)
+ *   junto com o identificador — é a única forma confiável de identificar
+ *   quem enviou sem a API oficial.
  *
  * Iniciar: node server.js
+ * Dev:     npx nodemon server.js
  */
 
-const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion }
-  = require('@whiskeysockets/baileys');
-const { Boom }    = require('@hapi/boom');
-const qrcode      = require('qrcode');
-const express     = require('express');
-const http        = require('http');
-const { Server }  = require('socket.io');
-const cors        = require('cors');
-const path        = require('path');
+const {
+  default: makeWASocket,
+  DisconnectReason,
+  useMultiFileAuthState,
+  fetchLatestBaileysVersion,
+  downloadContentFromMessage
+} = require('@whiskeysockets/baileys');
+const { Boom }   = require('@hapi/boom');
+const qrcode     = require('qrcode');
+const express    = require('express');
+const http       = require('http');
+const { Server } = require('socket.io');
+const cors       = require('cors');
+const path       = require('path');
+const fs         = require('fs');
 require('dotenv').config();
+
+// ── Diretório de mídia ────────────────────────────────────────
+const MEDIA_DIR = path.join(__dirname, 'media');
+if (!fs.existsSync(MEDIA_DIR)) fs.mkdirSync(MEDIA_DIR, { recursive: true });
 
 // ── HTTP + Socket.io ──────────────────────────────────────────
 const app    = express();
@@ -23,29 +38,30 @@ const server = http.createServer(app);
 const io     = new Server(server, { cors: { origin: '*' } });
 
 app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '.')));   // serve index.html
+app.use(express.json({ limit: '50mb' }));
+app.use('/media', express.static(MEDIA_DIR));       // serve áudios/imagens
+app.use(express.static(path.join(__dirname, '.'))); // serve index.html
 
-// ── State ─────────────────────────────────────────────────────
+// ── Estado global ─────────────────────────────────────────────
 let sock           = null;
 let isConnected    = false;
 let connectedPhone = '';
 let currentQR      = null;
 
-// ── WhatsApp Connection ───────────────────────────────────────
+// ── Conexão WhatsApp ──────────────────────────────────────────
 async function connectWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
   const { version }          = await fetchLatestBaileysVersion();
 
   sock = makeWASocket({
     version,
-    auth:               state,
-    printQRInTerminal:  true,     // QR também no terminal como fallback
-    browser:            ['Corrêa CRM', 'Chrome', '120.0.0'],
-    getMessage:         async () => undefined   // evita erros de histórico
+    auth:              state,
+    printQRInTerminal: true,
+    browser:           ['Corrêa CRM', 'Chrome', '120.0.0'],
+    getMessage:        async () => undefined
   });
 
-  // ── Eventos de conexão ────────────────────────────────────
+  // ── Eventos de conexão ──────────────────────────────────────
   sock.ev.on('connection.update', async update => {
     const { connection, lastDisconnect, qr } = update;
 
@@ -58,11 +74,11 @@ async function connectWhatsApp() {
 
     if (connection === 'open') {
       isConnected    = true;
-      connectedPhone = (sock.user?.id || '').split(':')[0].replace(/\D/g, '');
+      connectedPhone = (sock.user?.id || '').split('@')[0].split(':')[0];
       currentQR      = null;
       io.emit('status', 'connected');
-      io.emit('phone', connectedPhone);
-      console.log(`[WA] Conectado! Número: +${connectedPhone}`);
+      io.emit('phone', connectedPhone.replace(/\D/g, ''));
+      console.log(`[WA] Conectado! +${connectedPhone.replace(/\D/g, '')}`);
     }
 
     if (connection === 'close') {
@@ -70,10 +86,8 @@ async function connectWhatsApp() {
       connectedPhone = '';
       io.emit('status', 'disconnected');
       const code = new Boom(lastDisconnect?.error)?.output?.statusCode;
-      console.log('[WA] Desconectado. Código:', code);
-
       if (code === DisconnectReason.loggedOut) {
-        console.log('[WA] Sessão encerrada. Delete ./auth_info e reinicie para reconectar.');
+        console.log('[WA] Deslogado. Delete ./auth_info e reinicie para gerar novo QR.');
       } else {
         console.log('[WA] Reconectando em 5s...');
         setTimeout(connectWhatsApp, 5000);
@@ -83,64 +97,94 @@ async function connectWhatsApp() {
 
   sock.ev.on('creds.update', saveCreds);
 
-  // ── Mensagens recebidas ───────────────────────────────────
+  // ── Mensagens recebidas ─────────────────────────────────────
   sock.ev.on('messages.upsert', async ({ messages, type }) => {
     if (type !== 'notify') return;
 
     for (const msg of messages) {
-      if (msg.key.fromMe) continue;                        // ignora enviadas por mim
+      if (msg.key.fromMe) continue;
+
       const jid = msg.key.remoteJid || '';
-      if (jid.endsWith('@g.us')) continue;                 // ignora grupos (por ora)
+      if (jid.endsWith('@g.us')) continue; // ignora grupos por ora
 
-      const phone = jid.split('@')[0].replace(/\D/g, '');
-      const text  = extractText(msg);
-      if (!text) continue;
+      // Extrair identificador limpo (pode ser número real ou LID)
+      const phoneId  = jid.split('@')[0].split(':')[0].replace(/\D/g, '');
+      const isLid    = jid.includes('@lid');
+      const pushName = msg.pushName || '';
 
-      console.log(`[IN] +${phone}: ${text.slice(0, 80)}`);
+      if (!phoneId) continue;
 
-      // Emite para o frontend salvar no Firebase
-      io.emit('new_message', {
-        phone,
-        remoteJid: jid,
-        text,
+      const m     = msg.message || {};
+      const text  = extractText(m);
+      const audio = m.audioMessage || m.pttMessage;
+
+      if (!text && !audio) continue;
+
+      const payload = {
+        phoneId,   // identificador (número real ou LID — use pushName para exibir)
+        isLid,
+        pushName,
         direction: 'in',
         timestamp: Date.now()
-      });
+      };
+
+      if (text) {
+        payload.type = 'text';
+        payload.text = text;
+        console.log(`[IN] ${pushName || '+' + phoneId}: ${text.slice(0, 80)}`);
+      }
+
+      if (audio) {
+        try {
+          const stream = await downloadContentFromMessage(audio, 'audio');
+          let buf = Buffer.from([]);
+          for await (const chunk of stream) buf = Buffer.concat([buf, chunk]);
+
+          const fname = `${Date.now()}_${phoneId}.ogg`;
+          fs.writeFileSync(path.join(MEDIA_DIR, fname), buf);
+
+          payload.type     = 'audio';
+          payload.text     = '[Áudio]';
+          payload.mediaUrl = `/media/${fname}`;
+          payload.duration = audio.seconds || 0;
+          console.log(`[IN] ${pushName || '+' + phoneId}: [Áudio ${audio.seconds || 0}s]`);
+        } catch (e) {
+          console.error('[AUDIO DOWNLOAD ERROR]', e.message);
+          continue;
+        }
+      }
+
+      io.emit('new_message', payload);
     }
   });
 }
 
-// Extrai texto de diferentes tipos de mensagem
-function extractText(msg) {
-  const m = msg.message;
-  if (!m) return '';
+// Extrai texto de diferentes tipos de mensagem Baileys
+function extractText(m) {
   return (
-    m.conversation                        ||
-    m.extendedTextMessage?.text           ||
-    m.imageMessage?.caption               ||
-    m.videoMessage?.caption               ||
-    m.documentMessage?.caption            ||
+    m.conversation                                ||
+    m.extendedTextMessage?.text                   ||
+    m.imageMessage?.caption                       ||
+    m.videoMessage?.caption                       ||
+    m.documentMessage?.caption                    ||
     m.buttonsResponseMessage?.selectedDisplayText ||
-    m.listResponseMessage?.title          ||
+    m.listResponseMessage?.title                  ||
     ''
   );
 }
 
-// ── REST API ──────────────────────────────────────────────────
-
-// POST /api/send  { phone: "5551999999999", text: "Olá!" }
+// ── REST: Enviar texto ────────────────────────────────────────
+// POST /api/send  →  { phone: "5551999999999", text: "Olá!" }
 app.post('/api/send', async (req, res) => {
   const { phone, text } = req.body || {};
   if (!phone || !text)
     return res.status(400).json({ error: '"phone" e "text" são obrigatórios.' });
   if (!isConnected || !sock)
-    return res.status(503).json({ error: 'WhatsApp não está conectado.' });
-
+    return res.status(503).json({ error: 'WhatsApp não conectado.' });
   try {
-    const digits = phone.replace(/\D/g, '');
-    const jid    = digits + '@s.whatsapp.net';
+    const jid = phone.replace(/\D/g, '') + '@s.whatsapp.net';
     await sock.sendMessage(jid, { text });
-    console.log(`[OUT] +${digits}: ${text.slice(0, 80)}`);
+    console.log(`[OUT] +${phone.replace(/\D/g, '')}: ${text.slice(0, 80)}`);
     res.json({ ok: true });
   } catch (e) {
     console.error('[SEND ERROR]', e.message);
@@ -148,26 +192,50 @@ app.post('/api/send', async (req, res) => {
   }
 });
 
-// GET /api/status
-app.get('/api/status', (_req, res) => {
-  res.json({ connected: isConnected, phone: connectedPhone });
+// ── REST: Enviar áudio ────────────────────────────────────────
+// POST /api/send-audio  →  { phone, audioBase64, mimetype? }
+app.post('/api/send-audio', async (req, res) => {
+  const { phone, audioBase64, mimetype = 'audio/ogg; codecs=opus' } = req.body || {};
+  if (!phone || !audioBase64)
+    return res.status(400).json({ error: '"phone" e "audioBase64" são obrigatórios.' });
+  if (!isConnected || !sock)
+    return res.status(503).json({ error: 'WhatsApp não conectado.' });
+  try {
+    const buffer = Buffer.from(audioBase64, 'base64');
+    const jid    = phone.replace(/\D/g, '') + '@s.whatsapp.net';
+    await sock.sendMessage(jid, { audio: buffer, mimetype, ptt: true });
+
+    // Salva localmente para histórico
+    const fname = `${Date.now()}_out_${phone.replace(/\D/g, '')}.ogg`;
+    fs.writeFileSync(path.join(MEDIA_DIR, fname), buffer);
+
+    console.log(`[OUT-AUDIO] +${phone.replace(/\D/g, '')}`);
+    res.json({ ok: true, mediaUrl: `/media/${fname}` });
+  } catch (e) {
+    console.error('[SEND-AUDIO ERROR]', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
-// ── Socket.io: enviar estado ao novo cliente ──────────────────
+// ── REST: Status ──────────────────────────────────────────────
+app.get('/api/status', (_req, res) =>
+  res.json({ connected: isConnected, phone: connectedPhone })
+);
+
+// ── Socket.io: sync estado para novo cliente ──────────────────
 io.on('connection', socket => {
   console.log('[WS] Frontend conectado');
   socket.emit('status', isConnected ? 'connected' : 'disconnected');
-  if (isConnected && connectedPhone) socket.emit('phone', connectedPhone);
+  if (isConnected && connectedPhone) socket.emit('phone', connectedPhone.replace(/\D/g, ''));
   if (currentQR) socket.emit('qr', currentQR);
 });
 
 // ── Start ─────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`\n╔══════════════════════════════════════╗`);
-  console.log(`║  Corrêa CRM — Servidor rodando       ║`);
-  console.log(`║  http://localhost:${PORT}               ║`);
-  console.log(`╚══════════════════════════════════════╝\n`);
+  console.log(`\n╔═══════════════════════════════════════╗`);
+  console.log(`║  Corrêa CRM  →  http://localhost:${PORT}   ║`);
+  console.log(`╚═══════════════════════════════════════╝\n`);
 });
 
 connectWhatsApp();
