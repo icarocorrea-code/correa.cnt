@@ -3,1402 +3,1456 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Corrêa · Mensagens WhatsApp</title>
+<title>Corrêa Assessoria · Sistema de Gestão</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-/* ── RESET ──────────────────────────────────────────────── */
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-:root{
-  --blue:#0866FF; --blue-h:#1877F2; --blue-l:#EBF2FF;
-  --green:#31A24C; --red:#E40303; --orange:#F59E0B;
-  --bg:#F0F2F5; --surface:#FFFFFF;
-  --text:#050505; --muted:#65676B; --subtle:#BCC0C4;
-  --border:#E4E6EA; --border-s:#CED0D4;
-  --bubble-out:#0866FF; --bubble-in:#E4E6EB;
-  --sidebar:360px; --topbar:56px;
-}
-html,body{height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  font-size:15px;color:var(--text);background:var(--bg);overflow:hidden;}
-
-/* ── QR OVERLAY ─────────────────────────────────────────── */
-#qr-overlay{
-  position:fixed;inset:0;z-index:9999;
-  background:rgba(5,5,5,.78);backdrop-filter:blur(10px);
-  display:flex;align-items:center;justify-content:center;
-}
-.qr-card{
-  background:var(--surface);border-radius:24px;padding:40px 36px;
-  width:420px;text-align:center;
-  box-shadow:0 32px 80px rgba(0,0,0,.35),0 0 0 1px rgba(0,0,0,.05);
-}
-.qr-logo{font-size:22px;font-weight:700;color:var(--blue);letter-spacing:-.5px;margin-bottom:4px;}
-.qr-sub{font-size:13px;color:var(--muted);margin-bottom:26px;}
-.qr-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;
-  font-size:12px;font-weight:600;margin-bottom:22px;}
-.qr-badge.waiting {background:#FFF3CD;color:#7D6008;}
-.qr-badge.scanning{background:#D1ECF1;color:#0C5460;}
-.qr-badge.ok      {background:#D4EDDA;color:#155724;}
-.qr-badge .dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
-.qr-frame{
-  width:240px;height:240px;border-radius:16px;border:2px solid var(--border);
-  margin:0 auto 26px;display:flex;align-items:center;justify-content:center;
-  overflow:hidden;background:var(--bg);
-}
-.qr-frame img{width:100%;height:100%;object-fit:contain;display:block;}
-.qr-spin-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;
-  color:var(--muted);font-size:13px;}
-.qr-spin{width:36px;height:36px;border:3px solid var(--border);
-  border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-.qr-steps{font-size:13px;color:var(--muted);line-height:1.75;text-align:left;}
-.qr-steps strong{color:var(--text);}
-.qr-steps ol{padding-left:16px;}
-.qr-steps li{margin-bottom:2px;}
-.qr-url-row{display:flex;gap:8px;align-items:center;
-  margin-top:22px;padding-top:18px;border-top:1px solid var(--border);}
-.qr-url-row input{flex:1;border:1px solid var(--border);border-radius:8px;
-  padding:8px 12px;font-family:inherit;font-size:13px;outline:none;color:var(--text);}
-.qr-url-row input:focus{border-color:var(--blue);}
-.qr-url-row button{background:var(--blue);color:#fff;border:none;border-radius:8px;
-  padding:8px 16px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
-  white-space:nowrap;transition:background .15s;}
-.qr-url-row button:hover{background:var(--blue-h);}
-
-/* ── APP ────────────────────────────────────────────────── */
-#app{display:flex;flex-direction:column;height:100vh;}
-
-/* ── TOPBAR ─────────────────────────────────────────────── */
-#topbar{
-  height:var(--topbar);background:var(--surface);
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 20px;gap:12px;
-  flex-shrink:0;z-index:100;
-}
-.tb-logo{font-size:17px;font-weight:700;color:var(--blue);letter-spacing:-.3px;}
-.tb-sep{width:1px;height:22px;background:var(--border);}
-.tb-label{font-size:13px;color:var(--muted);font-weight:500;}
-.tb-actions{margin-left:auto;display:flex;align-items:center;gap:10px;}
-.tb-phone{font-size:13px;color:var(--muted);font-weight:500;}
-.st-chip{display:inline-flex;align-items:center;gap:5px;
-  padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;transition:all .2s;}
-.st-chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
-.st-chip.connected   {background:#E6F4EA;color:#1B7B3A;}
-.st-chip.disconnected{background:#FEE2E2;color:#991B1B;}
-.st-chip.waiting     {background:#FEF9C3;color:#713F12;}
-.tb-btn{border:1px solid var(--border);background:var(--surface);border-radius:8px;
-  padding:6px 14px;font-family:inherit;font-size:13px;font-weight:600;
-  cursor:pointer;color:var(--text);transition:all .15s;}
-.tb-btn:hover{background:var(--bg);}
-
-/* ── MAIN ───────────────────────────────────────────────── */
-#main{display:flex;flex:1;overflow:hidden;}
-
-/* ── SIDEBAR ────────────────────────────────────────────── */
-#sidebar{
-  width:var(--sidebar);flex-shrink:0;background:var(--surface);
-  border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;
-}
-.sb-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
-.sb-tab{flex:1;padding:13px 10px;border:none;background:transparent;
-  font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);
-  cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
-.sb-tab:hover{color:var(--text);background:var(--bg);}
-.sb-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
-
-#convs-panel{display:flex;flex-direction:column;flex:1;overflow:hidden;}
-.sb-head{padding:12px 16px 8px;display:flex;align-items:center;
-  justify-content:space-between;flex-shrink:0;}
-.sb-head h2{font-size:17px;font-weight:700;}
-.new-btn{width:30px;height:30px;border-radius:50%;border:none;
-  background:var(--blue-l);color:var(--blue);cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1;
-  transition:all .15s;}
-.new-btn:hover{background:var(--blue);color:#fff;}
-.sb-search{padding:8px 12px 0;flex-shrink:0;}
-.search-wrap{position:relative;}
-.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);
-  pointer-events:none;color:var(--subtle);}
-.sb-search-input{
-  width:100%;border:none;background:var(--bg);border-radius:20px;
-  padding:8px 14px 8px 36px;font-family:inherit;font-size:14px;outline:none;color:var(--text);
-}
-.sb-search-input::placeholder{color:var(--subtle);}
-
-/* ── FILTROS DE STATUS ──────────────────────────────────── */
-.filter-bar{
-  display:flex;gap:6px;padding:8px 12px;flex-shrink:0;overflow-x:auto;
-  border-bottom:1px solid var(--border);
-}
-.filter-bar::-webkit-scrollbar{height:0;}
-.filter-btn{
-  padding:4px 12px;border-radius:20px;border:1px solid var(--border);
-  font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;
-  white-space:nowrap;transition:all .15s;background:transparent;color:var(--muted);
-}
-.filter-btn:hover{border-color:var(--blue);color:var(--blue);}
-.filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
-.filter-count{
-  display:inline-flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.12);border-radius:10px;min-width:16px;height:16px;
-  padding:0 4px;font-size:10px;margin-left:4px;
-}
-.filter-btn.active .filter-count{background:rgba(255,255,255,.25);}
-
-#conv-list,#contact-list{flex:1;overflow-y:auto;}
-#conv-list::-webkit-scrollbar,#contact-list::-webkit-scrollbar{width:3px;}
-#conv-list::-webkit-scrollbar-thumb,#contact-list::-webkit-scrollbar-thumb{
-  background:var(--border);border-radius:4px;}
-.conv-item,.contact-item{
-  display:flex;align-items:center;gap:12px;padding:11px 16px;
-  cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border);
-}
-.conv-item:hover,.contact-item:hover{background:var(--bg);}
-.conv-item.active{background:var(--blue-l);}
-.av{
-  width:46px;height:46px;border-radius:50%;flex-shrink:0;
-  background:linear-gradient(135deg,#0866FF,#00B4FF);
-  display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-weight:700;color:#fff;letter-spacing:-1px;
-  position:relative;
-}
-.av.sm{width:36px;height:36px;font-size:12px;}
-.status-dot{
-  position:absolute;bottom:1px;right:1px;
-  width:11px;height:11px;border-radius:50%;border:2px solid var(--surface);
-}
-.status-dot.open    {background:var(--green);}
-.status-dot.pending {background:var(--orange);}
-.status-dot.resolved{background:var(--subtle);}
-
-.conv-info,.contact-info{flex:1;min-width:0;}
-.conv-name,.contact-name{font-size:15px;font-weight:600;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.conv-prev,.contact-phone{font-size:13px;color:var(--muted);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
-.conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
-.conv-time{font-size:11px;color:var(--muted);}
-.conv-badge{background:var(--blue);color:#fff;font-size:11px;font-weight:700;
-  min-width:18px;height:18px;border-radius:9px;padding:0 5px;
-  display:flex;align-items:center;justify-content:center;}
-.contact-item .edit-btn{
-  opacity:0;width:28px;height:28px;border-radius:6px;border:1px solid var(--border);
-  background:transparent;cursor:pointer;color:var(--muted);font-size:12px;
-  transition:all .15s;display:flex;align-items:center;justify-content:center;flex-shrink:0;
-}
-.contact-item:hover .edit-btn{opacity:1;}
-.contact-item .edit-btn:hover{background:var(--bg);color:var(--text);}
-.sb-empty{padding:48px 20px;text-align:center;color:var(--muted);font-size:14px;line-height:1.7;}
-
-#contacts-panel{display:none;flex-direction:column;flex:1;overflow:hidden;}
-#contacts-panel.active{display:flex;}
-
-/* ── CHAT AREA ──────────────────────────────────────────── */
-#chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
-#empty-state{flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:14px;color:var(--muted);}
-.es-icon{width:76px;height:76px;background:var(--border);border-radius:50%;
-  display:flex;align-items:center;justify-content:center;}
-.es-icon svg{width:36px;height:36px;stroke:var(--muted);fill:none;stroke-width:1.5;
-  stroke-linecap:round;stroke-linejoin:round;}
-#empty-state h3{font-size:20px;font-weight:700;color:var(--text);}
-#empty-state p{font-size:14px;max-width:260px;text-align:center;line-height:1.6;}
-#active-chat{flex:1;display:none;flex-direction:column;overflow:hidden;}
-
-/* ── CHAT HEADER ────────────────────────────────────────── */
-#chat-hdr{
-  background:var(--surface);border-bottom:1px solid var(--border);
-  padding:10px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;
-  box-shadow:0 1px 3px rgba(0,0,0,.05);
-}
-.hdr-av{width:40px;height:40px;border-radius:50%;flex-shrink:0;
-  background:linear-gradient(135deg,#0866FF,#00B4FF);
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;font-weight:700;color:#fff;}
-.hdr-info{flex:1;}
-.hdr-name{font-size:15px;font-weight:700;}
-.hdr-phone{font-size:12px;color:var(--muted);margin-top:1px;}
-.hdr-acts{display:flex;align-items:center;gap:6px;}
-.hdr-status{
-  border:1px solid var(--border);background:var(--bg);border-radius:20px;
-  padding:5px 10px;font-family:inherit;font-size:12px;font-weight:600;
-  cursor:pointer;outline:none;color:var(--text);transition:all .15s;
-}
-.hdr-status:hover{border-color:var(--blue);}
-.hdr-status option{font-weight:600;}
-.ico-btn{width:36px;height:36px;border:none;background:transparent;border-radius:8px;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  color:var(--muted);transition:all .15s;}
-.ico-btn:hover{background:var(--bg);color:var(--text);}
-.ico-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;
-  stroke-linecap:round;stroke-linejoin:round;}
-
-/* ── MENSAGENS ──────────────────────────────────────────── */
-#msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:1px;}
-#msgs::-webkit-scrollbar{width:4px;}
-#msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
-.date-sep{display:flex;align-items:center;gap:10px;margin:14px 0;}
-.date-sep span{font-size:12px;color:var(--muted);font-weight:600;
-  background:var(--bg);padding:0 8px;white-space:nowrap;}
-.date-sep::before,.date-sep::after{content:'';flex:1;height:1px;background:var(--border);}
-.msg-row{display:flex;align-items:flex-end;gap:7px;margin-bottom:2px;}
-.msg-row.out{flex-direction:row-reverse;}
-.msg-av{width:26px;height:26px;border-radius:50%;flex-shrink:0;
-  background:linear-gradient(135deg,#0866FF,#00B4FF);
-  display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:700;color:#fff;}
-.msg-av.hide{visibility:hidden;}
-.bubble{max-width:68%;padding:9px 13px;border-radius:18px;
-  font-size:14.5px;line-height:1.5;word-break:break-word;}
-.bubble.out{background:var(--bubble-out);color:#fff;border-bottom-right-radius:5px;}
-.bubble.in {background:var(--surface);color:var(--text);border-bottom-left-radius:5px;
-  box-shadow:0 1px 2px rgba(0,0,0,.09);}
-.btime{font-size:11px;opacity:.65;margin-top:4px;display:block;text-align:right;}
-.bubble.in .btime{text-align:left;}
-
-/* ── ÁUDIO BUBBLE ───────────────────────────────────────── */
-.audio-bubble{display:flex;align-items:center;gap:10px;min-width:200px;max-width:260px;}
-.audio-play-btn{
-  width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;
-}
-.bubble.out .audio-play-btn{background:rgba(255,255,255,.25);color:#fff;}
-.bubble.out .audio-play-btn:hover{background:rgba(255,255,255,.4);}
-.bubble.in  .audio-play-btn{background:var(--blue-l);color:var(--blue);}
-.bubble.in  .audio-play-btn:hover{background:var(--blue);color:#fff;}
-.audio-play-btn svg{width:16px;height:16px;fill:currentColor;stroke:none;}
-.audio-track{flex:1;}
-.audio-bar{
-  width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.3);
-  cursor:pointer;margin-bottom:5px;appearance:none;outline:none;
-}
-.bubble.in .audio-bar{background:var(--border);}
-.audio-bar::-webkit-slider-thumb{appearance:none;width:12px;height:12px;
-  border-radius:50%;background:#fff;cursor:pointer;}
-.bubble.in .audio-bar::-webkit-slider-thumb{background:var(--blue);}
-.audio-duration{font-size:11px;opacity:.7;}
-.audio-player-hidden{display:none;}
-
-/* ── IMAGEM BUBBLE ──────────────────────────────────────── */
-.img-bubble{
-  max-width:220px;border-radius:12px;display:block;cursor:zoom-in;
-  margin-bottom:4px;object-fit:cover;
-}
-.img-bubble:hover{opacity:.92;}
-
-/* ── EMOJI POPUP ────────────────────────────────────────── */
-#emoji-popup{
-  position:absolute;bottom:68px;left:56px;z-index:300;
-  display:none;
-  border-radius:16px;overflow:hidden;
-  box-shadow:0 8px 32px rgba(0,0,0,.18),0 0 0 1px var(--border);
-}
-#emoji-popup emoji-picker{--border-radius:0;}
-
-/* ── INPUT AREA ─────────────────────────────────────────── */
-#input-area{
-  background:var(--surface);border-top:1px solid var(--border);
-  padding:10px 14px;display:flex;align-items:flex-end;gap:8px;flex-shrink:0;
-  position:relative;
-}
-.inp-ico{
-  width:38px;height:38px;border-radius:50%;border:none;background:transparent;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  color:var(--muted);transition:all .15s;flex-shrink:0;
-}
-.inp-ico:hover{color:var(--blue);background:var(--blue-l);}
-.inp-ico.recording{color:#fff!important;background:var(--red)!important;animation:pulse 1s infinite;}
-.inp-ico.active{color:var(--blue);background:var(--blue-l);}
-@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
-.inp-ico svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:2;
-  stroke-linecap:round;stroke-linejoin:round;}
-#msg-input{
-  flex:1;border:1px solid var(--border);border-radius:22px;
-  padding:9px 15px;font-family:inherit;font-size:14.5px;resize:none;
-  outline:none;max-height:120px;overflow-y:auto;line-height:1.4;
-  background:var(--bg);transition:border-color .15s;
-}
-#msg-input:focus{border-color:var(--blue);background:var(--surface);}
-#msg-input::placeholder{color:var(--subtle);}
-#send-btn{
-  width:38px;height:38px;border-radius:50%;border:none;
-  background:var(--blue);color:#fff;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;transition:all .2s;opacity:.4;transform:scale(.9);
-}
-#send-btn.on{opacity:1;transform:scale(1);}
-#send-btn:hover.on{background:var(--blue-h);}
-#send-btn svg{width:18px;height:18px;fill:#fff;margin-left:2px;}
-
-/* ── RESPOSTAS RÁPIDAS ──────────────────────────────────── */
-#quick-popup{
-  position:absolute;bottom:68px;left:56px;right:56px;z-index:300;
-  background:var(--surface);border-radius:12px;overflow:hidden;
-  box-shadow:0 4px 20px rgba(0,0,0,.14),0 0 0 1px var(--border);
-  display:none;max-height:180px;overflow-y:auto;
-}
-.qr-item{
-  padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--border);
-  transition:background .1s;
-}
-.qr-item:last-child{border-bottom:none;}
-.qr-item:hover{background:var(--bg);}
-.qr-key{font-size:12px;font-weight:700;color:var(--blue);margin-right:8px;}
-.qr-text{font-size:13px;color:var(--text);}
-
-/* ── LIGHTBOX ───────────────────────────────────────────── */
-#lightbox{
-  position:fixed;inset:0;z-index:9998;
-  background:rgba(0,0,0,.88);backdrop-filter:blur(6px);
-  display:none;align-items:center;justify-content:center;
-  cursor:zoom-out;
-}
-#lightbox img{max-width:90vw;max-height:90vh;border-radius:8px;
-  box-shadow:0 16px 48px rgba(0,0,0,.4);}
-
-/* ── MODAIS ─────────────────────────────────────────────── */
-.modal-bg{
-  position:fixed;inset:0;z-index:500;
-  background:rgba(0,0,0,.35);backdrop-filter:blur(4px);
-  display:none;align-items:center;justify-content:center;
-}
-.modal-bg.open{display:flex;}
-.modal-card{
-  background:var(--surface);border-radius:16px;padding:28px 24px;width:360px;
-  box-shadow:0 20px 60px rgba(0,0,0,.2);
-}
-.modal-card h3{font-size:16px;font-weight:700;margin-bottom:18px;}
-.modal-card input{
-  width:100%;border:1px solid var(--border);border-radius:10px;
-  padding:11px 14px;font-family:inherit;font-size:14px;outline:none;
-  margin-bottom:10px;color:var(--text);
-}
-.modal-card input:focus{border-color:var(--blue);}
-.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
-.btn{border:none;border-radius:8px;padding:9px 18px;font-family:inherit;
-  font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;}
-.btn-ghost{background:var(--bg);color:var(--text);}
-.btn-ghost:hover{background:var(--border);}
-.btn-blue{background:var(--blue);color:#fff;}
-.btn-blue:hover{background:var(--blue-h);}
-
-/* ── TOAST ──────────────────────────────────────────────── */
-#toast{
-  position:fixed;bottom:28px;left:50%;
-  transform:translateX(-50%) translateY(16px);
-  background:#1C1E21;color:#fff;padding:10px 20px;border-radius:10px;
-  font-size:13px;font-weight:500;opacity:0;transition:all .3s;
-  pointer-events:none;z-index:9999;white-space:nowrap;
-}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/design-system.css">
+<link rel="stylesheet" href="assets/css/layout.css">
+<link rel="stylesheet" href="assets/css/modules.css">
 </head>
 <body>
 
-<!-- ═══════════ QR OVERLAY ══════════════════════════════════ -->
-<div id="qr-overlay">
-  <div class="qr-card">
-    <div class="qr-logo">Corrêa Contabilidade</div>
-    <div class="qr-sub">Plataforma de Mensagens via WhatsApp</div>
-    <div id="qr-badge" class="qr-badge waiting">
-      <span class="dot"></span>
-      <span id="qr-badge-txt">Aguardando servidor...</span>
-    </div>
-    <div id="qr-frame" class="qr-frame">
-      <div class="qr-spin-wrap">
-        <div class="qr-spin"></div>
-        <span>Conectando...</span>
+<!-- ░░ SHELL ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ -->
+<div id="shell">
+
+  <!-- ────────── SIDEBAR ────────── -->
+  <aside id="sidebar">
+
+    <!-- Logo -->
+    <div class="sb-logo">
+      <div class="sb-logo-mark">CA</div>
+      <div class="sb-logo-text">
+        <div class="sb-logo-name">Corrêa Assessoria</div>
+        <div class="sb-logo-sub">Serviços Contábeis</div>
       </div>
     </div>
-    <div class="qr-steps">
-      <ol>
-        <li>Abra o <strong>WhatsApp</strong> no seu celular</li>
-        <li>Toque em <strong>Menu → Aparelhos conectados</strong></li>
-        <li>Toque em <strong>Conectar um aparelho</strong></li>
-        <li>Aponte a câmera para este QR Code</li>
-      </ol>
-    </div>
-    <div class="qr-url-row">
-      <input id="srv-url" type="text" value="http://localhost:3000"
-             placeholder="URL do servidor">
-      <button onclick="connectServer()">Conectar</button>
-    </div>
-  </div>
-</div>
 
-<!-- ═══════════ APP ══════════════════════════════════════════ -->
-<div id="app">
+    <!-- Collapse toggle -->
+    <button class="sb-collapse-btn" id="sidebarToggle" title="Recolher menu">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M8 2L4 6L8 10" stroke="#6B7280" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
 
-  <!-- TOPBAR -->
-  <header id="topbar">
-    <span class="tb-logo">Corrêa CRM</span>
-    <div class="tb-sep"></div>
-    <span class="tb-label">WhatsApp Mensagens</span>
-    <div class="tb-actions">
-      <span id="tb-phone" class="tb-phone" style="display:none"></span>
-      <span id="st-chip" class="st-chip disconnected">
-        <span class="dot"></span><span id="st-txt">Desconectado</span>
-      </span>
-      <button class="tb-btn" id="qr-btn"
-              onclick="document.getElementById('qr-overlay').style.display='flex'">
-        Escanear QR
-      </button>
+    <!-- Nav -->
+    <nav class="sb-nav">
+
+      <div class="sb-section-label">Principal</div>
+
+      <div class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+        </span>
+        <span class="nav-label">Dashboard</span>
+      </div>
+
+      <div class="nav-item" data-page="clientes">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </span>
+        <span class="nav-label">Clientes</span>
+        <span class="nav-badge">148</span>
+      </div>
+
+      <div class="nav-item" data-page="obrigacoes">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </span>
+        <span class="nav-label">Obrigações</span>
+        <span class="nav-badge" style="background:#EF4444">7</span>
+      </div>
+
+      <div class="nav-item" data-page="tarefas">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 11 12 14 22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </span>
+        <span class="nav-label">Tarefas</span>
+      </div>
+
+      <div class="sb-section-label">Gestão</div>
+
+      <div class="nav-item" data-page="documentos">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+          </svg>
+        </span>
+        <span class="nav-label">Documentos</span>
+      </div>
+
+      <div class="nav-item" data-page="financeiro">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </span>
+        <span class="nav-label">Financeiro</span>
+      </div>
+
+      <div class="nav-item" data-page="relatorios">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
+          </svg>
+        </span>
+        <span class="nav-label">Relatórios</span>
+      </div>
+
+      <div class="sb-section-label">Canais</div>
+
+      <div class="nav-item" data-page="whatsapp">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
+          </svg>
+        </span>
+        <span class="nav-label">WhatsApp</span>
+        <span class="nav-badge">3</span>
+      </div>
+
+      <div class="nav-item" data-page="email">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </span>
+        <span class="nav-label">E-mail</span>
+      </div>
+
+      <div class="nav-item" data-page="portal">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </span>
+        <span class="nav-label">Portal do Cliente</span>
+      </div>
+
+    </nav>
+
+    <!-- User -->
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-user-avatar">IC</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Icaro Corrêa</div>
+          <div class="sb-user-role">Contador · Admin</div>
+        </div>
+      </div>
     </div>
-  </header>
 
-  <!-- MAIN -->
+  </aside><!-- /sidebar -->
+
+  <!-- ────────── MAIN ────────── -->
   <div id="main">
 
-    <!-- SIDEBAR -->
-    <aside id="sidebar">
-      <div class="sb-tabs">
-        <button class="sb-tab active" id="tab-convs"
-                onclick="setSbTab('convs')">Conversas</button>
-        <button class="sb-tab" id="tab-contacts"
-                onclick="setSbTab('contacts')">Contatos</button>
+    <!-- Topbar -->
+    <header id="topbar">
+      <div class="tb-breadcrumb">
+        <span>Corrêa Assessoria</span>
+        <span>›</span>
+        <strong id="tb-current-page">Dashboard</strong>
       </div>
 
-      <!-- ── PAINEL CONVERSAS ── -->
-      <div id="convs-panel">
-        <div class="sb-head">
-          <h2>Conversas</h2>
-          <button class="new-btn" title="Nova conversa" onclick="openNC()">+</button>
-        </div>
-        <div class="sb-search">
-          <div class="search-wrap">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                 stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input id="search" class="sb-search-input" type="search"
-                   placeholder="Buscar conversas...">
-          </div>
-        </div>
-        <!-- Filtros de status -->
-        <div class="filter-bar">
-          <button class="filter-btn active" id="filter-all"
-                  onclick="setFilter('all')">
-            Todos <span class="filter-count" id="fc-all">0</span>
-          </button>
-          <button class="filter-btn" id="filter-open"
-                  onclick="setFilter('open')">
-            Abertos <span class="filter-count" id="fc-open">0</span>
-          </button>
-          <button class="filter-btn" id="filter-pending"
-                  onclick="setFilter('pending')">
-            Pendentes <span class="filter-count" id="fc-pending">0</span>
-          </button>
-          <button class="filter-btn" id="filter-resolved"
-                  onclick="setFilter('resolved')">
-            Resolvidos <span class="filter-count" id="fc-resolved">0</span>
-          </button>
-        </div>
-        <div id="conv-list">
-          <div class="sb-empty">Nenhuma conversa.<br>Conecte o WhatsApp para começar.</div>
-        </div>
+      <div class="tb-search">
+        <svg class="tb-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="search" placeholder="Buscar clientes, documentos, obrigações…">
       </div>
 
-      <!-- ── PAINEL CONTATOS ── -->
-      <div id="contacts-panel">
-        <div class="sb-head">
-          <h2>Contatos</h2>
-          <button class="new-btn" title="Novo contato" onclick="openNC()">+</button>
+      <div class="tb-actions">
+        <!-- Notificações -->
+        <div class="tb-icon-btn" title="Notificações">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="notif-dot"></span>
         </div>
-        <div class="sb-search">
-          <div class="search-wrap">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                 stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input id="contact-search" class="sb-search-input" type="search"
-                   placeholder="Buscar contatos...">
-          </div>
-        </div>
-        <div id="contact-list">
-          <div class="sb-empty">Nenhum contato salvo ainda.</div>
-        </div>
-      </div>
-    </aside>
-
-    <!-- CHAT AREA -->
-    <main id="chat-area">
-      <div id="empty-state">
-        <div class="es-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        <!-- Ajuda -->
+        <div class="tb-icon-btn" title="Ajuda">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
         </div>
-        <h3>Suas mensagens</h3>
-        <p>Selecione uma conversa ou inicie um novo chat.</p>
+        <div class="tb-divider"></div>
+        <!-- Settings -->
+        <div class="tb-icon-btn" title="Configurações" data-nav="config">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </div>
       </div>
+    </header><!-- /topbar -->
 
-      <div id="active-chat">
-        <!-- Chat header -->
-        <div id="chat-hdr">
-          <div class="hdr-av" id="hdr-av"></div>
-          <div class="hdr-info">
-            <div class="hdr-name"  id="hdr-name"></div>
-            <div class="hdr-phone" id="hdr-phone"></div>
+    <!-- Content -->
+    <main id="content">
+
+      <!-- ▓▓▓▓▓▓ DASHBOARD ▓▓▓▓▓▓ -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Bom dia, Icaro 👋</div>
+            <div class="page-subtitle">Quarta-feira, 7 de maio de 2025 · Mês de apuração: Abril/2025</div>
           </div>
-          <div class="hdr-acts">
-            <select class="hdr-status" id="hdr-status"
-                    onchange="setConvStatus(window._activePhone, this.value)"
-                    title="Status da conversa">
-              <option value="open">🟢 Aberto</option>
-              <option value="pending">🟡 Pendente</option>
-              <option value="resolved">⚪ Resolvido</option>
-            </select>
-            <button class="ico-btn" title="Editar contato"
-                    onclick="openEditContact(window._activePhone)">
-              <svg viewBox="0 0 24 24">
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
+          <div class="flex gap-8">
+            <button class="btn btn-outline btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="openModal('modal-nova-tarefa')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nova Tarefa
             </button>
           </div>
         </div>
 
-        <!-- Messages -->
-        <div id="msgs"></div>
+        <!-- Quick stats -->
+        <div class="quick-stats">
+          <div class="qs-item">
+            <div class="qs-num">148</div>
+            <div class="qs-label">Clientes Ativos</div>
+          </div>
+          <div class="qs-item">
+            <div class="qs-num" style="color:var(--danger)">7</div>
+            <div class="qs-label">Vencendo Hoje</div>
+          </div>
+          <div class="qs-item">
+            <div class="qs-num" style="color:var(--warning)">23</div>
+            <div class="qs-label">Tarefas Abertas</div>
+          </div>
+          <div class="qs-item">
+            <div class="qs-num" style="color:var(--success)">R$ 42k</div>
+            <div class="qs-label">Honorários/mês</div>
+          </div>
+        </div>
 
-        <!-- Emoji popup (posicionado dentro do input-area via CSS absolute) -->
-        <div id="emoji-popup"></div>
+        <!-- KPIs -->
+        <div class="grid-4" style="margin-bottom:24px">
+          <div class="kpi-card">
+            <div class="kpi-card-top">
+              <div class="kpi-icon brand">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div class="kpi-trend up">▲ 3%</div>
+            </div>
+            <div class="kpi-value">148</div>
+            <div class="kpi-label">Clientes Ativos</div>
+            <div class="kpi-sub">+4 neste mês</div>
+          </div>
 
-        <!-- Quick replies popup -->
-        <div id="quick-popup"></div>
+          <div class="kpi-card">
+            <div class="kpi-card-top">
+              <div class="kpi-icon accent">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div class="kpi-trend up">▲ 8%</div>
+            </div>
+            <div class="kpi-value">R$ 42.800</div>
+            <div class="kpi-label">Honorários Mensais</div>
+            <div class="kpi-sub">Meta: R$ 50.000</div>
+          </div>
 
-        <!-- Input -->
-        <div id="input-area">
-          <button class="inp-ico" id="mic-btn" title="Gravar áudio"
-                  onclick="toggleRecording()">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
-              <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
-            </svg>
+          <div class="kpi-card">
+            <div class="kpi-card-top">
+              <div class="kpi-icon warn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div class="kpi-trend down">▼ 12%</div>
+            </div>
+            <div class="kpi-value">38</div>
+            <div class="kpi-label">Obrigações no Mês</div>
+            <div class="kpi-sub">31 entregues · 7 pendentes</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-card-top">
+              <div class="kpi-icon danger">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <div class="kpi-trend down">▼ 2</div>
+            </div>
+            <div class="kpi-value">R$ 3.200</div>
+            <div class="kpi-label">Inadimplência</div>
+            <div class="kpi-sub">4 clientes em atraso</div>
+          </div>
+        </div>
+
+        <!-- Bottom grid -->
+        <div class="grid-2" style="gap:20px">
+          <!-- Prazos críticos -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="fw-700" style="font-size:14px">Prazos Críticos</div>
+                <div class="text-sm text-muted">Próximos 15 dias</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="navTo('obrigacoes')">Ver todos</button>
+            </div>
+            <div class="card-body">
+              <div class="prazo-item">
+                <div class="prazo-date">
+                  <div class="prazo-day">07</div>
+                  <div class="prazo-month">Mai</div>
+                </div>
+                <div class="prazo-info">
+                  <div class="prazo-name">FGTS — Competência Abr/25</div>
+                  <div class="prazo-clients">48 clientes com folha ativa</div>
+                </div>
+                <div class="prazo-urgency"><span class="badge badge-danger">HOJE</span></div>
+              </div>
+              <div class="prazo-item">
+                <div class="prazo-date">
+                  <div class="prazo-day">10</div>
+                  <div class="prazo-month">Mai</div>
+                </div>
+                <div class="prazo-info">
+                  <div class="prazo-name">ISSQN Municipal — Abril</div>
+                  <div class="prazo-clients">23 clientes prestadores de serviço</div>
+                </div>
+                <div class="prazo-urgency"><span class="badge badge-warning">3 dias</span></div>
+              </div>
+              <div class="prazo-item">
+                <div class="prazo-date">
+                  <div class="prazo-day">15</div>
+                  <div class="prazo-month">Mai</div>
+                </div>
+                <div class="prazo-info">
+                  <div class="prazo-name">DARF Simples Nacional</div>
+                  <div class="prazo-clients">91 clientes Simples</div>
+                </div>
+                <div class="prazo-urgency"><span class="badge badge-neutral">8 dias</span></div>
+              </div>
+              <div class="prazo-item">
+                <div class="prazo-date">
+                  <div class="prazo-day">20</div>
+                  <div class="prazo-month">Mai</div>
+                </div>
+                <div class="prazo-info">
+                  <div class="prazo-name">EFD-REINF</div>
+                  <div class="prazo-clients">34 clientes obrigados</div>
+                </div>
+                <div class="prazo-urgency"><span class="badge badge-neutral">13 dias</span></div>
+              </div>
+              <div class="prazo-item">
+                <div class="prazo-date">
+                  <div class="prazo-day">31</div>
+                  <div class="prazo-month">Mai</div>
+                </div>
+                <div class="prazo-info">
+                  <div class="prazo-name">SPED Contábil — Exercício 2024</div>
+                  <div class="prazo-clients">12 clientes Lucro Real/Presumido</div>
+                </div>
+                <div class="prazo-urgency"><span class="badge badge-neutral">24 dias</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Atividade recente -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="fw-700" style="font-size:14px">Atividade Recente</div>
+                <div class="text-sm text-muted">Últimas ações no sistema</div>
+              </div>
+              <button class="btn btn-ghost btn-sm">Ver log</button>
+            </div>
+            <div class="card-body">
+              <div class="feed-list">
+                <div class="feed-item">
+                  <div class="feed-dot" style="background:var(--accent-500)"></div>
+                  <div class="feed-content">
+                    <div class="feed-text"><strong>DARF INSS</strong> entregue para Padaria Boa Vista Ltda</div>
+                    <div class="feed-time">Há 12 minutos · Amanda Souza</div>
+                  </div>
+                </div>
+                <div class="feed-item">
+                  <div class="feed-dot" style="background:var(--info)"></div>
+                  <div class="feed-content">
+                    <div class="feed-text">Nota fiscal de honorários emitida para <strong>Clínica São Lucas</strong> — R$ 980,00</div>
+                    <div class="feed-time">Há 34 minutos · Sistema</div>
+                  </div>
+                </div>
+                <div class="feed-item">
+                  <div class="feed-dot" style="background:var(--warning)"></div>
+                  <div class="feed-content">
+                    <div class="feed-text">Balanço Patrimonial enviado via <strong>WhatsApp</strong> para Transportes Rápido</div>
+                    <div class="feed-time">Há 1 hora · Icaro Corrêa</div>
+                  </div>
+                </div>
+                <div class="feed-item">
+                  <div class="feed-dot" style="background:var(--danger)"></div>
+                  <div class="feed-content">
+                    <div class="feed-text">Prazo da <strong>ECF 2024</strong> atualizado — nova data: 31/07/2025</div>
+                    <div class="feed-time">Há 2 horas · Sistema</div>
+                  </div>
+                </div>
+                <div class="feed-item">
+                  <div class="feed-dot" style="background:var(--accent-500)"></div>
+                  <div class="feed-content">
+                    <div class="feed-text">Novo cliente cadastrado: <strong>Estúdio Arte & Design ME</strong></div>
+                    <div class="feed-time">Hoje às 09:14 · Carlos Mendes</div>
+                  </div>
+                </div>
+                <div class="feed-item">
+                  <div class="feed-dot" style="background:var(--brand-500)"></div>
+                  <div class="feed-content">
+                    <div class="feed-text">Documento XML NF-e importado: <strong>Construções Alfa (124 notas)</strong></div>
+                    <div class="feed-time">Hoje às 08:40 · Amanda Souza</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ▓▓▓▓▓▓ CLIENTES ▓▓▓▓▓▓ -->
+      <section class="page" id="page-clientes">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Clientes</div>
+            <div class="page-subtitle">148 clientes ativos em carteira</div>
+          </div>
+          <div class="flex gap-8">
+            <button class="btn btn-outline btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Importar
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="openModal('modal-novo-cliente')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Novo Cliente
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="client-filters">
+          <div class="filter-tab active">Todos (148)</div>
+          <div class="filter-tab">Simples Nacional (91)</div>
+          <div class="filter-tab">Lucro Presumido (34)</div>
+          <div class="filter-tab">Lucro Real (12)</div>
+          <div class="filter-tab">MEI (11)</div>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <select class="form-control" style="width:auto;padding:6px 12px">
+              <option>Todos os responsáveis</option>
+              <option>Icaro Corrêa</option>
+              <option>Amanda Souza</option>
+              <option>Carlos Mendes</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:36px"><input type="checkbox"></th>
+                  <th>Cliente / Razão Social</th>
+                  <th>CNPJ / CPF</th>
+                  <th>Regime</th>
+                  <th>Responsável</th>
+                  <th>Honorário</th>
+                  <th>Status</th>
+                  <th>Canais</th>
+                  <th style="width:40px"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td>
+                    <div class="client-row-name">Padaria Boa Vista Ltda</div>
+                    <div class="client-row-doc">Padaria e Confeitaria · Desde Jan/2018</div>
+                  </td>
+                  <td><span style="font-size:12px;font-family:monospace">12.345.678/0001-99</span></td>
+                  <td><span class="regime-badge regime-simples">Simples</span></td>
+                  <td>
+                    <div class="flex items-center gap-6">
+                      <div class="avatar avatar-sm">AM</div>
+                      <span style="font-size:12px">Amanda S.</span>
+                    </div>
+                  </td>
+                  <td><strong>R$ 650</strong></td>
+                  <td><span class="badge badge-accent">Ativo</span></td>
+                  <td>
+                    <div class="flex gap-4">
+                      <span class="channel-pill whatsapp">WA</span>
+                      <span class="channel-pill email">E-mail</span>
+                    </div>
+                  </td>
+                  <td>
+                    <button class="btn btn-ghost btn-icon btn-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td>
+                    <div class="client-row-name">Clínica São Lucas S/S</div>
+                    <div class="client-row-doc">Serviços de Saúde · Desde Mar/2020</div>
+                  </td>
+                  <td><span style="font-size:12px;font-family:monospace">98.765.432/0001-11</span></td>
+                  <td><span class="regime-badge regime-lucro-p">Lucro Pres.</span></td>
+                  <td>
+                    <div class="flex items-center gap-6">
+                      <div class="avatar avatar-sm">IC</div>
+                      <span style="font-size:12px">Icaro C.</span>
+                    </div>
+                  </td>
+                  <td><strong>R$ 1.800</strong></td>
+                  <td><span class="badge badge-accent">Ativo</span></td>
+                  <td>
+                    <div class="flex gap-4">
+                      <span class="channel-pill whatsapp">WA</span>
+                      <span class="channel-pill portal">Portal</span>
+                    </div>
+                  </td>
+                  <td>
+                    <button class="btn btn-ghost btn-icon btn-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td>
+                    <div class="client-row-name">Transportes Rápido Eireli</div>
+                    <div class="client-row-doc">Transporte de Cargas · Desde Jun/2019</div>
+                  </td>
+                  <td><span style="font-size:12px;font-family:monospace">55.321.789/0001-44</span></td>
+                  <td><span class="regime-badge regime-lucro-p">Lucro Pres.</span></td>
+                  <td>
+                    <div class="flex items-center gap-6">
+                      <div class="avatar avatar-sm">CM</div>
+                      <span style="font-size:12px">Carlos M.</span>
+                    </div>
+                  </td>
+                  <td><strong>R$ 2.200</strong></td>
+                  <td><span class="badge badge-warning" style="background:var(--warning-l);color:#92400E">Em revisão</span></td>
+                  <td>
+                    <div class="flex gap-4">
+                      <span class="channel-pill email">E-mail</span>
+                      <span class="channel-pill telefone">Tel.</span>
+                    </div>
+                  </td>
+                  <td>
+                    <button class="btn btn-ghost btn-icon btn-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td>
+                    <div class="client-row-name">Estúdio Arte &amp; Design ME</div>
+                    <div class="client-row-doc">Design Gráfico · Desde Mai/2025</div>
+                  </td>
+                  <td><span style="font-size:12px;font-family:monospace">77.654.321/0001-88</span></td>
+                  <td><span class="regime-badge regime-simples">Simples</span></td>
+                  <td>
+                    <div class="flex items-center gap-6">
+                      <div class="avatar avatar-sm">CM</div>
+                      <span style="font-size:12px">Carlos M.</span>
+                    </div>
+                  </td>
+                  <td><strong>R$ 350</strong></td>
+                  <td><span class="badge badge-brand">Onboarding</span></td>
+                  <td>
+                    <div class="flex gap-4">
+                      <span class="channel-pill whatsapp">WA</span>
+                    </div>
+                  </td>
+                  <td>
+                    <button class="btn btn-ghost btn-icon btn-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer" style="justify-content:space-between">
+            <span class="text-sm text-muted">Mostrando 4 de 148 clientes</span>
+            <div class="flex gap-4">
+              <button class="btn btn-outline btn-sm">Anterior</button>
+              <button class="btn btn-primary btn-sm">Próximo</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ▓▓▓▓▓▓ OBRIGAÇÕES ▓▓▓▓▓▓ -->
+      <section class="page" id="page-obrigacoes">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Obrigações Fiscais</div>
+            <div class="page-subtitle">Calendário de entregas · Maio de 2025</div>
+          </div>
+          <div class="flex gap-8">
+            <button class="btn btn-outline btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              Abril
+            </button>
+            <span class="btn btn-ghost btn-sm fw-700">Maio 2025</span>
+            <button class="btn btn-outline btn-sm">
+              Junho
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="openModal('modal-nova-obrigacao')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nova Obrigação
+            </button>
+          </div>
+        </div>
+
+        <div class="grid-2" style="gap:20px;align-items:start">
+          <!-- Calendário -->
+          <div class="card card-padded">
+            <div class="fw-700 text-md" style="margin-bottom:16px">Calendário de Maio</div>
+            <div class="cal-grid">
+              <div class="cal-dow">Dom</div><div class="cal-dow">Seg</div>
+              <div class="cal-dow">Ter</div><div class="cal-dow">Qua</div>
+              <div class="cal-dow">Qui</div><div class="cal-dow">Sex</div>
+              <div class="cal-dow">Sáb</div>
+              <!-- Row 1: 27 Apr - 3 May -->
+              <div class="cal-cell other-month"><div class="cal-cell-num">27</div></div>
+              <div class="cal-cell other-month"><div class="cal-cell-num">28</div></div>
+              <div class="cal-cell other-month"><div class="cal-cell-num">29</div></div>
+              <div class="cal-cell other-month"><div class="cal-cell-num">30</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">1</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">2</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">3</div></div>
+              <!-- Row 2 -->
+              <div class="cal-cell"><div class="cal-cell-num">4</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">5</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">6</div></div>
+              <div class="cal-cell today">
+                <div class="cal-cell-num">7</div>
+                <div class="cal-event federal">FGTS</div>
+              </div>
+              <div class="cal-cell"><div class="cal-cell-num">8</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">9</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">10</div>
+                <div class="cal-event municipal">ISSQN</div>
+              </div>
+              <!-- Row 3 -->
+              <div class="cal-cell"><div class="cal-cell-num">11</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">12</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">13</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">14</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">15</div>
+                <div class="cal-event federal">Simples</div>
+                <div class="cal-event trabalhista">eSocial</div>
+              </div>
+              <div class="cal-cell"><div class="cal-cell-num">16</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">17</div></div>
+              <!-- Row 4 -->
+              <div class="cal-cell"><div class="cal-cell-num">18</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">19</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">20</div>
+                <div class="cal-event federal">REINF</div>
+                <div class="cal-event estadual">ICMS</div>
+              </div>
+              <div class="cal-cell"><div class="cal-cell-num">21</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">22</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">23</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">24</div></div>
+              <!-- Row 5 -->
+              <div class="cal-cell"><div class="cal-cell-num">25</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">26</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">27</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">28</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">29</div></div>
+              <div class="cal-cell"><div class="cal-cell-num">30</div>
+                <div class="cal-event federal">DARF PJ</div>
+              </div>
+              <div class="cal-cell"><div class="cal-cell-num">31</div>
+                <div class="cal-event federal">SPED</div>
+              </div>
+            </div>
+            <!-- Legend -->
+            <div class="flex gap-12" style="flex-wrap:wrap;margin-top:8px">
+              <div class="flex items-center gap-4"><span class="cal-event federal" style="margin:0">Federal</span></div>
+              <div class="flex items-center gap-4"><span class="cal-event estadual" style="margin:0">Estadual</span></div>
+              <div class="flex items-center gap-4"><span class="cal-event municipal" style="margin:0">Municipal</span></div>
+              <div class="flex items-center gap-4"><span class="cal-event trabalhista" style="margin:0">Trabalhista</span></div>
+            </div>
+          </div>
+
+          <!-- Lista de obrigações -->
+          <div>
+            <div class="flex items-center justify-between" style="margin-bottom:12px">
+              <div class="fw-700 text-md">Obrigações do Mês</div>
+              <div class="flex gap-4">
+                <span class="badge badge-danger">7 pendentes</span>
+                <span class="badge badge-success">31 entregues</span>
+              </div>
+            </div>
+
+            <div class="obrig-item">
+              <div class="obrig-check"></div>
+              <div>
+                <div class="obrig-name">FGTS — Competência Abril/2025</div>
+                <div class="obrig-scope">48 empresas · Federal · Caixa Econômica</div>
+              </div>
+              <div class="obrig-due late">Hoje · 07/05</div>
+            </div>
+
+            <div class="obrig-item">
+              <div class="obrig-check"></div>
+              <div>
+                <div class="obrig-name">ISSQN Municipal — Abril/2025</div>
+                <div class="obrig-scope">23 prestadores de serviço · Municipal</div>
+              </div>
+              <div class="obrig-due near">3 dias · 10/05</div>
+            </div>
+
+            <div class="obrig-item">
+              <div class="obrig-check"></div>
+              <div>
+                <div class="obrig-name">Simples Nacional DAS — Abril/2025</div>
+                <div class="obrig-scope">91 empresas Simples · Federal · Receita</div>
+              </div>
+              <div class="obrig-due ok">8 dias · 15/05</div>
+            </div>
+
+            <div class="obrig-item">
+              <div class="obrig-check"></div>
+              <div>
+                <div class="obrig-name">eSocial S-1200 — Abril/2025</div>
+                <div class="obrig-scope">48 empresas com folha · Trabalhista</div>
+              </div>
+              <div class="obrig-due ok">8 dias · 15/05</div>
+            </div>
+
+            <div class="obrig-item done">
+              <div class="obrig-check"></div>
+              <div>
+                <div class="obrig-name">IRRF — Competência Abril/2025</div>
+                <div class="obrig-scope">37 empresas · Federal</div>
+              </div>
+              <div class="obrig-due ok">Entregue 05/05</div>
+            </div>
+
+            <div class="obrig-item done">
+              <div class="obrig-check"></div>
+              <div>
+                <div class="obrig-name">DCTF Mensal — Março/2025</div>
+                <div class="obrig-scope">46 empresas LP/LR · Federal</div>
+              </div>
+              <div class="obrig-due ok">Entregue 02/05</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ▓▓▓▓▓▓ TAREFAS ▓▓▓▓▓▓ -->
+      <section class="page" id="page-tarefas">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Tarefas</div>
+            <div class="page-subtitle">23 tarefas abertas · 5 atribuídas a você</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-nova-tarefa')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nova Tarefa
           </button>
-          <textarea id="msg-input" rows="1" placeholder="Mensagem..."
-                    onkeydown="onMsgKey(event)"
-                    oninput="onInputChange(this)"></textarea>
-          <button class="inp-ico" id="emoji-btn" title="Emoji"
-                  onclick="toggleEmoji(event)">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-              <line x1="9"  y1="9"  x2="9.01"  y2="9"/>
-              <line x1="15" y1="9"  x2="15.01" y2="9"/>
-            </svg>
-          </button>
-          <button id="send-btn" onclick="sendMsg()" title="Enviar">
-            <svg viewBox="0 0 24 24">
-              <line x1="22" y1="2" x2="11" y2="13"/>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-          </button>
+        </div>
+
+        <!-- Kanban columns -->
+        <div class="flex gap-16" style="overflow-x:auto;padding-bottom:8px;min-height:400px">
+
+          <!-- Col: A Fazer -->
+          <div style="min-width:280px;flex-shrink:0">
+            <div class="flex items-center gap-8" style="margin-bottom:12px">
+              <span class="badge badge-neutral">A Fazer</span>
+              <span class="text-sm text-muted">8 tarefas</span>
+            </div>
+            <div class="client-card">
+              <div class="client-card-name">Apurar ICMS — Transportes Rápido</div>
+              <div class="client-card-meta">Regime Lucro Presumido · Maio/2025</div>
+              <div class="client-card-foot">
+                <span class="badge badge-warning">Alta</span>
+                <div class="avatar avatar-sm">CM</div>
+              </div>
+            </div>
+            <div class="client-card">
+              <div class="client-card-name">Conciliação bancária — Padaria Boa Vista</div>
+              <div class="client-card-meta">Abril/2025 · 3 contas</div>
+              <div class="client-card-foot">
+                <span class="badge badge-neutral">Normal</span>
+                <div class="avatar avatar-sm">AM</div>
+              </div>
+            </div>
+            <div class="client-card">
+              <div class="client-card-name">Onboarding — Estúdio Arte &amp; Design</div>
+              <div class="client-card-meta">Coleta de documentos iniciais</div>
+              <div class="client-card-foot">
+                <span class="badge badge-brand">Onboard</span>
+                <div class="avatar avatar-sm">IC</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Col: Em Andamento -->
+          <div style="min-width:280px;flex-shrink:0">
+            <div class="flex items-center gap-8" style="margin-bottom:12px">
+              <span class="badge badge-brand">Em Andamento</span>
+              <span class="text-sm text-muted">10 tarefas</span>
+            </div>
+            <div class="client-card" style="border-color:var(--brand-400)">
+              <div class="client-card-name">EFD-ICMS/IPI — Construtora Alfa</div>
+              <div class="client-card-meta">Escrituração Abril/2025 · 80% completo</div>
+              <div style="height:4px;background:var(--gray-100);border-radius:4px;margin:8px 0">
+                <div style="height:100%;width:80%;background:var(--brand-500);border-radius:4px"></div>
+              </div>
+              <div class="client-card-foot">
+                <span class="badge badge-danger">Urgente</span>
+                <div class="avatar avatar-sm">AM</div>
+              </div>
+            </div>
+            <div class="client-card" style="border-color:var(--brand-400)">
+              <div class="client-card-name">Folha de pagamento — Clínica São Lucas</div>
+              <div class="client-card-meta">Maio/2025 · 18 funcionários</div>
+              <div style="height:4px;background:var(--gray-100);border-radius:4px;margin:8px 0">
+                <div style="height:100%;width:45%;background:var(--accent-500);border-radius:4px"></div>
+              </div>
+              <div class="client-card-foot">
+                <span class="badge badge-warning">Alta</span>
+                <div class="avatar avatar-sm">IC</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Col: Revisão -->
+          <div style="min-width:280px;flex-shrink:0">
+            <div class="flex items-center gap-8" style="margin-bottom:12px">
+              <span class="badge badge-warning">Em Revisão</span>
+              <span class="text-sm text-muted">3 tarefas</span>
+            </div>
+            <div class="client-card">
+              <div class="client-card-name">DRE Gerencial — Transportes Rápido</div>
+              <div class="client-card-meta">Aguardando aprovação do sócio</div>
+              <div class="client-card-foot">
+                <span class="badge badge-neutral">Normal</span>
+                <div class="avatar avatar-sm">IC</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Col: Concluído -->
+          <div style="min-width:280px;flex-shrink:0">
+            <div class="flex items-center gap-8" style="margin-bottom:12px">
+              <span class="badge badge-success">Concluído</span>
+              <span class="text-sm text-muted">2 hoje</span>
+            </div>
+            <div class="client-card" style="opacity:.7">
+              <div class="client-card-name" style="text-decoration:line-through">DARF INSS — Padaria Boa Vista</div>
+              <div class="client-card-meta">Concluído às 09:42 · Maio/2025</div>
+              <div class="client-card-foot">
+                <span class="badge badge-success">Feito</span>
+                <div class="avatar avatar-sm">AM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ▓▓▓▓▓▓ DOCUMENTOS ▓▓▓▓▓▓ -->
+      <section class="page" id="page-documentos">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Documentos</div>
+            <div class="page-subtitle">Gestão Eletrônica de Documentos</div>
+          </div>
+          <div class="flex gap-8">
+            <button class="btn btn-outline btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload
+            </button>
+            <button class="btn btn-primary btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nova Pasta
+            </button>
+          </div>
+        </div>
+
+        <div class="grid-2" style="gap:20px;align-items:start">
+          <!-- Tree -->
+          <div class="card card-padded" style="max-width:260px">
+            <div class="fw-700 text-sm" style="margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500)">Estrutura</div>
+            <div class="folder-tree">
+              <div class="folder-item active">📁 Clientes</div>
+              <div class="folder-item sub">📂 Padaria Boa Vista</div>
+              <div class="folder-item sub">📂 Clínica São Lucas</div>
+              <div class="folder-item sub">📂 Transportes Rápido</div>
+              <div class="folder-item">📁 Fiscal</div>
+              <div class="folder-item sub">📂 NF-e Entrada</div>
+              <div class="folder-item sub">📂 NF-e Saída</div>
+              <div class="folder-item sub">📂 Guias Pagas</div>
+              <div class="folder-item">📁 Contábil</div>
+              <div class="folder-item sub">📂 Balanços</div>
+              <div class="folder-item sub">📂 DRE</div>
+              <div class="folder-item">📁 DP / RH</div>
+              <div class="folder-item sub">📂 Folhas de Pagamento</div>
+              <div class="folder-item sub">📂 Contratos</div>
+              <div class="folder-item">📁 Societário</div>
+              <div class="folder-item">📁 Certidões</div>
+            </div>
+          </div>
+
+          <!-- Files -->
+          <div>
+            <!-- Upload zone -->
+            <div class="doc-upload-zone" style="margin-bottom:20px" onclick="showToast('Função de upload será implementada no backend')">
+              <div class="doc-upload-icon">📤</div>
+              <div class="doc-upload-title">Arraste arquivos ou clique para enviar</div>
+              <div class="doc-upload-sub">PDF, XML, XLSX, DOCX — máx. 50 MB por arquivo</div>
+            </div>
+            <div class="flex items-center justify-between" style="margin-bottom:12px">
+              <div class="fw-600">Clientes / Padaria Boa Vista</div>
+              <span class="text-sm text-muted">12 arquivos</span>
+            </div>
+            <div class="doc-list">
+              <div class="doc-card">
+                <div class="doc-icon pdf">PDF</div>
+                <div class="doc-name">Balanço_2024.pdf</div>
+                <div class="doc-meta">2,4 MB · 02/03/2025</div>
+              </div>
+              <div class="doc-card">
+                <div class="doc-icon xlsx">XLSX</div>
+                <div class="doc-name">Folha_Abr25.xlsx</div>
+                <div class="doc-meta">340 KB · 01/05/2025</div>
+              </div>
+              <div class="doc-card">
+                <div class="doc-icon xml">XML</div>
+                <div class="doc-name">NF-e_0548.xml</div>
+                <div class="doc-meta">12 KB · 28/04/2025</div>
+              </div>
+              <div class="doc-card">
+                <div class="doc-icon pdf">PDF</div>
+                <div class="doc-name">DAS_Mai25.pdf</div>
+                <div class="doc-meta">88 KB · 05/05/2025</div>
+              </div>
+              <div class="doc-card">
+                <div class="doc-icon docx">DOCX</div>
+                <div class="doc-name">Contrato_Social.docx</div>
+                <div class="doc-meta">520 KB · 15/01/2018</div>
+              </div>
+              <div class="doc-card">
+                <div class="doc-icon zip">ZIP</div>
+                <div class="doc-name">SPED_2023.zip</div>
+                <div class="doc-meta">18 MB · 30/06/2024</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ▓▓▓▓▓▓ FINANCEIRO ▓▓▓▓▓▓ -->
+      <section class="page" id="page-financeiro">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Financeiro</div>
+            <div class="page-subtitle">Honorários, cobranças e fluxo de caixa</div>
+          </div>
+          <div class="flex gap-8">
+            <button class="btn btn-outline btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar
+            </button>
+            <button class="btn btn-accent btn-sm" onclick="openModal('modal-nova-cobranca')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nova Cobrança
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="fin-summary">
+          <div class="fin-sum-cell">
+            <div class="fin-sum-label">Receita Prevista · Mai/25</div>
+            <div class="fin-sum-value receita">R$ 42.800</div>
+            <div class="fin-sum-sub">148 clientes · 100% faturado</div>
+          </div>
+          <div class="fin-sum-cell">
+            <div class="fin-sum-label">Recebido até hoje</div>
+            <div class="fin-sum-value receita">R$ 38.250</div>
+            <div class="fin-sum-sub">89,4% do previsto</div>
+          </div>
+          <div class="fin-sum-cell">
+            <div class="fin-sum-label">Em Atraso</div>
+            <div class="fin-sum-value despesa">R$ 3.200</div>
+            <div class="fin-sum-sub">4 clientes · Cobrar agora</div>
+          </div>
+        </div>
+
+        <!-- Invoices table -->
+        <div class="card">
+          <div class="card-header">
+            <div class="fw-700">Faturas — Maio 2025</div>
+            <div class="flex gap-8">
+              <select class="form-control" style="width:auto;padding:6px 12px;font-size:12px">
+                <option>Todas as faturas</option>
+                <option>Pagas</option>
+                <option>Pendentes</option>
+                <option>Em atraso</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Referência</th>
+                  <th>Valor</th>
+                  <th>Vencimento</th>
+                  <th>Status</th>
+                  <th>Canal envio</th>
+                  <th style="width:40px"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Padaria Boa Vista Ltda</strong></td>
+                  <td>Honorários Mai/25</td>
+                  <td><strong>R$ 650,00</strong></td>
+                  <td>10/05/2025</td>
+                  <td>
+                    <div class="invoice-row-status">
+                      <div class="status-dot pago"></div>
+                      Pago
+                    </div>
+                  </td>
+                  <td><span class="channel-pill whatsapp">WhatsApp</span></td>
+                  <td><button class="btn btn-ghost btn-icon btn-sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></td>
+                </tr>
+                <tr>
+                  <td><strong>Clínica São Lucas S/S</strong></td>
+                  <td>Honorários Mai/25</td>
+                  <td><strong>R$ 1.800,00</strong></td>
+                  <td>05/05/2025</td>
+                  <td>
+                    <div class="invoice-row-status">
+                      <div class="status-dot pago"></div>
+                      Pago
+                    </div>
+                  </td>
+                  <td><span class="channel-pill email">E-mail</span></td>
+                  <td><button class="btn btn-ghost btn-icon btn-sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></td>
+                </tr>
+                <tr>
+                  <td><strong>Transportes Rápido Eireli</strong></td>
+                  <td>Honorários Mai/25</td>
+                  <td><strong>R$ 2.200,00</strong></td>
+                  <td>01/05/2025</td>
+                  <td>
+                    <div class="invoice-row-status">
+                      <div class="status-dot atraso"></div>
+                      <span style="color:var(--danger)">6 dias atraso</span>
+                    </div>
+                  </td>
+                  <td><span class="channel-pill whatsapp">WhatsApp</span></td>
+                  <td><button class="btn btn-ghost btn-icon btn-sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></td>
+                </tr>
+                <tr>
+                  <td><strong>Estúdio Arte &amp; Design ME</strong></td>
+                  <td>Honorários Mai/25</td>
+                  <td><strong>R$ 350,00</strong></td>
+                  <td>15/05/2025</td>
+                  <td>
+                    <div class="invoice-row-status">
+                      <div class="status-dot pend"></div>
+                      Pendente
+                    </div>
+                  </td>
+                  <td><span class="channel-pill whatsapp">WhatsApp</span></td>
+                  <td><button class="btn btn-ghost btn-icon btn-sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ▓▓▓▓▓▓ RELATÓRIOS ▓▓▓▓▓▓ -->
+      <section class="page" id="page-relatorios">
+        <div class="page-header">
+          <div class="page-title">Relatórios</div>
+        </div>
+        <div class="grid-3">
+          <div class="card card-padded" style="cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow=''">
+            <div class="kpi-icon brand" style="margin-bottom:14px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div>
+            <div class="fw-700 text-md">DRE Gerencial</div>
+            <div class="text-sm text-muted" style="margin-top:4px">Demonstração de Resultado consolidada por cliente ou período</div>
+            <div style="margin-top:16px"><span class="badge badge-accent">Disponível</span></div>
+          </div>
+          <div class="card card-padded" style="cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow=''">
+            <div class="kpi-icon accent" style="margin-bottom:14px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <div class="fw-700 text-md">Balanço Patrimonial</div>
+            <div class="text-sm text-muted" style="margin-top:4px">Ativo, passivo e patrimônio líquido por empresa</div>
+            <div style="margin-top:16px"><span class="badge badge-accent">Disponível</span></div>
+          </div>
+          <div class="card card-padded" style="cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow=''">
+            <div class="kpi-icon warn" style="margin-bottom:14px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <div class="fw-700 text-md">Fluxo de Caixa</div>
+            <div class="text-sm text-muted" style="margin-top:4px">Entradas e saídas consolidadas do escritório</div>
+            <div style="margin-top:16px"><span class="badge badge-accent">Disponível</span></div>
+          </div>
+          <div class="card card-padded" style="cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow=''">
+            <div class="kpi-icon info" style="margin-bottom:14px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div class="fw-700 text-md">Produtividade da Equipe</div>
+            <div class="text-sm text-muted" style="margin-top:4px">Tarefas por colaborador, tempo médio de entrega</div>
+            <div style="margin-top:16px"><span class="badge badge-neutral">Em breve</span></div>
+          </div>
+          <div class="card card-padded" style="cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow=''">
+            <div class="kpi-icon brand" style="margin-bottom:14px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+            <div class="fw-700 text-md">Carteira de Clientes</div>
+            <div class="text-sm text-muted" style="margin-top:4px">Distribuição por regime, porte, setor e responsável</div>
+            <div style="margin-top:16px"><span class="badge badge-accent">Disponível</span></div>
+          </div>
+          <div class="card card-padded" style="cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow=''">
+            <div class="kpi-icon danger" style="margin-bottom:14px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="fw-700 text-md">Histórico de Obrigações</div>
+            <div class="text-sm text-muted" style="margin-top:4px">Entregas no prazo, atrasos e tendências</div>
+            <div style="margin-top:16px"><span class="badge badge-neutral">Em breve</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ▓▓▓▓▓▓ WHATSAPP ▓▓▓▓▓▓ -->
+      <section class="page" id="page-whatsapp">
+        <div class="page-header">
+          <div class="page-title">WhatsApp</div>
+          <div class="page-subtitle">Canal de atendimento omnichannel</div>
+        </div>
+        <div class="card" style="overflow:hidden;height:calc(100vh - 200px);min-height:400px">
+          <iframe src="whatsapp.html" style="width:100%;height:100%;border:none"></iframe>
+        </div>
+      </section>
+
+      <!-- ▓▓▓▓▓▓ E-MAIL ▓▓▓▓▓▓ -->
+      <section class="page" id="page-email">
+        <div class="page-header"><div class="page-title">E-mail</div></div>
+        <div class="empty-state card">
+          <div class="empty-state-icon">✉️</div>
+          <div class="empty-state-title">Módulo E-mail</div>
+          <div class="empty-state-sub">Integração com Gmail e Outlook · Em desenvolvimento</div>
+          <button class="btn btn-primary btn-sm" style="margin-top:8px">Configurar conta</button>
+        </div>
+      </section>
+
+      <!-- ▓▓▓▓▓▓ PORTAL ▓▓▓▓▓▓ -->
+      <section class="page" id="page-portal">
+        <div class="page-header"><div class="page-title">Portal do Cliente</div></div>
+        <div class="empty-state card">
+          <div class="empty-state-icon">🌐</div>
+          <div class="empty-state-title">Portal de Autoatendimento</div>
+          <div class="empty-state-sub">Área exclusiva onde clientes acessam documentos, boletos e relatórios · Em desenvolvimento</div>
+          <button class="btn btn-primary btn-sm" style="margin-top:8px">Ativar portal</button>
+        </div>
+      </section>
+
+      <!-- ▓▓▓▓▓▓ CONFIG ▓▓▓▓▓▓ -->
+      <section class="page" id="page-config">
+        <div class="page-header">
+          <div class="page-title">Configurações</div>
+        </div>
+        <div class="grid-2" style="gap:20px;align-items:start">
+          <div class="card card-padded">
+            <div class="fw-700 text-md" style="margin-bottom:16px">Escritório</div>
+            <div class="form-group">
+              <label class="form-label">Razão Social</label>
+              <input class="form-control" value="Corrêa Assessoria e Serviços Contábeis">
+            </div>
+            <div class="form-group">
+              <label class="form-label">CNPJ</label>
+              <input class="form-control" value="00.000.000/0001-00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">CRC</label>
+              <input class="form-control" placeholder="CRC/UF-0000000/O-0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">E-mail principal</label>
+              <input class="form-control" type="email" placeholder="contato@correa.cnt">
+            </div>
+            <button class="btn btn-primary btn-sm">Salvar</button>
+          </div>
+          <div class="card card-padded">
+            <div class="fw-700 text-md" style="margin-bottom:16px">Equipe</div>
+            <div class="flex items-center gap-12" style="padding:10px 0;border-bottom:1px solid var(--gray-100)">
+              <div class="avatar">IC</div>
+              <div style="flex:1">
+                <div class="fw-600">Icaro Corrêa</div>
+                <div class="text-sm text-muted">Contador · Admin</div>
+              </div>
+              <span class="badge badge-brand">Admin</span>
+            </div>
+            <div class="flex items-center gap-12" style="padding:10px 0;border-bottom:1px solid var(--gray-100)">
+              <div class="avatar" style="background:var(--accent-100);color:var(--accent-700)">AS</div>
+              <div style="flex:1">
+                <div class="fw-600">Amanda Souza</div>
+                <div class="text-sm text-muted">Auxiliar Contábil</div>
+              </div>
+              <span class="badge badge-neutral">Colaborador</span>
+            </div>
+            <div class="flex items-center gap-12" style="padding:10px 0">
+              <div class="avatar" style="background:#EDE9FE;color:#5B21B6">CM</div>
+              <div style="flex:1">
+                <div class="fw-600">Carlos Mendes</div>
+                <div class="text-sm text-muted">Técnico em Contabilidade</div>
+              </div>
+              <span class="badge badge-neutral">Colaborador</span>
+            </div>
+            <div class="divider"></div>
+            <button class="btn btn-outline btn-sm">+ Convidar colaborador</button>
+          </div>
+        </div>
+      </section>
+
+    </main><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ░░ MODAIS ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ -->
+
+<!-- Modal: Nova Tarefa -->
+<div class="modal-overlay" id="modal-nova-tarefa" onclick="closeModalOutside(event, 'modal-nova-tarefa')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Nova Tarefa</div>
+      <div class="modal-close" onclick="closeModal('modal-nova-tarefa')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Título</label>
+        <input class="form-control" placeholder="Ex: Apurar ICMS — Cliente XYZ">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cliente</label>
+        <select class="form-control">
+          <option value="">Selecionar cliente…</option>
+          <option>Padaria Boa Vista Ltda</option>
+          <option>Clínica São Lucas S/S</option>
+          <option>Transportes Rápido Eireli</option>
+        </select>
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="form-group">
+          <label class="form-label">Responsável</label>
+          <select class="form-control">
+            <option>Icaro Corrêa</option>
+            <option>Amanda Souza</option>
+            <option>Carlos Mendes</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prazo</label>
+          <input class="form-control" type="date">
         </div>
       </div>
-    </main>
-  </div>
-</div>
-
-<!-- ═══════════ MODAL: NOVA CONVERSA ═════════════════════════ -->
-<div id="nc-modal" class="modal-bg">
-  <div class="modal-card">
-    <h3>Nova conversa</h3>
-    <input id="nc-name"  type="text" placeholder="Nome do contato (opcional)">
-    <input id="nc-phone" type="tel"  placeholder="Número: 5551999999999">
-    <div class="modal-btns">
-      <button class="btn btn-ghost" onclick="closeNC()">Cancelar</button>
-      <button class="btn btn-blue"  onclick="startNC()">Iniciar</button>
+      <div class="form-group">
+        <label class="form-label">Prioridade</label>
+        <select class="form-control">
+          <option>Normal</option>
+          <option>Alta</option>
+          <option>Urgente</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Observações</label>
+        <textarea class="form-control" rows="3" placeholder="Detalhes, referências, links…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-nova-tarefa')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="closeModal('modal-nova-tarefa');showToast('Tarefa criada com sucesso!','success')">Criar Tarefa</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════ MODAL: EDITAR CONTATO ═══════════════════════ -->
-<div id="edit-modal" class="modal-bg">
-  <div class="modal-card">
-    <h3>Editar contato</h3>
-    <input id="edit-name"  type="text" placeholder="Nome do contato">
-    <input id="edit-phone" type="tel"  placeholder="Número" readonly
-           style="background:var(--bg);color:var(--muted)">
-    <div class="modal-btns">
-      <button class="btn btn-ghost" onclick="closeEdit()">Cancelar</button>
-      <button class="btn btn-blue"  onclick="saveEdit()">Salvar</button>
+<!-- Modal: Novo Cliente -->
+<div class="modal-overlay" id="modal-novo-cliente" onclick="closeModalOutside(event, 'modal-novo-cliente')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Novo Cliente</div>
+      <div class="modal-close" onclick="closeModal('modal-novo-cliente')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Razão Social / Nome</label>
+        <input class="form-control" placeholder="Ex: Padaria Boa Vista Ltda">
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="form-group">
+          <label class="form-label">CNPJ / CPF</label>
+          <input class="form-control" placeholder="00.000.000/0001-00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Regime Tributário</label>
+          <select class="form-control">
+            <option>Simples Nacional</option>
+            <option>Lucro Presumido</option>
+            <option>Lucro Real</option>
+            <option>MEI</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="form-group">
+          <label class="form-label">WhatsApp</label>
+          <input class="form-control" placeholder="(11) 99999-9999">
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input class="form-control" type="email" placeholder="contato@empresa.com">
+        </div>
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="form-group">
+          <label class="form-label">Honorário Mensal</label>
+          <input class="form-control" placeholder="R$ 0,00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Responsável</label>
+          <select class="form-control">
+            <option>Icaro Corrêa</option>
+            <option>Amanda Souza</option>
+            <option>Carlos Mendes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-novo-cliente')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="closeModal('modal-novo-cliente');showToast('Cliente cadastrado!','success')">Cadastrar</button>
     </div>
   </div>
 </div>
 
-<!-- LIGHTBOX -->
-<div id="lightbox" onclick="document.getElementById('lightbox').style.display='none'">
-  <img id="lightbox-img" src="" alt="">
+<!-- Modal: Nova Obrigação -->
+<div class="modal-overlay" id="modal-nova-obrigacao" onclick="closeModalOutside(event, 'modal-nova-obrigacao')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Nova Obrigação</div>
+      <div class="modal-close" onclick="closeModal('modal-nova-obrigacao')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Obrigação</label>
+        <input class="form-control" placeholder="Ex: DCTF Mensal, EFD-ICMS, SPED Contábil…">
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="form-group">
+          <label class="form-label">Âmbito</label>
+          <select class="form-control">
+            <option>Federal</option><option>Estadual</option>
+            <option>Municipal</option><option>Trabalhista</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de Vencimento</label>
+          <input class="form-control" type="date">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Clientes Afetados</label>
+        <select class="form-control">
+          <option>Todos os clientes</option>
+          <option>Apenas Simples Nacional</option>
+          <option>Apenas Lucro Presumido / Real</option>
+          <option>Selecionar manualmente…</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-nova-obrigacao')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="closeModal('modal-nova-obrigacao');showToast('Obrigação cadastrada!','success')">Salvar</button>
+    </div>
+  </div>
 </div>
 
-<!-- TOAST -->
-<div id="toast"></div>
-
-<!-- ═══════════ FIREBASE ═════════════════════════════════════ -->
-<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, addDoc, setDoc,
-         onSnapshot, query, orderBy, serverTimestamp, writeBatch, Timestamp }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-/* ── Emoji picker ─────────────────────────────────────────── */
-import 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js';
-
-const cfg = {
-  apiKey:            "AIzaSyBz5ktXOZD8hAYPzDlp8eSQsJL4nsjNt_E",
-  authDomain:        "correacnt.firebaseapp.com",
-  projectId:         "correacnt",
-  storageBucket:     "correacnt.firebasestorage.app",
-  messagingSenderId: "406389265513",
-  appId:             "1:406389265513:web:0035ad188adf89ddc1fef8"
-};
-const fbApp = initializeApp(cfg);
-const db    = getFirestore(fbApp);
-
-window._db          = db;
-window._fbAdd       = addDoc;
-window._fbSet       = setDoc;
-window._fbCol       = collection;
-window._fbDoc       = doc;
-window._fbTs        = serverTimestamp;
-window._fbBatch     = () => writeBatch(db);
-window._fbTimestamp = Timestamp;
-
-/* ── Emoji picker init ───────────────────────────────────── */
-const picker = document.createElement('emoji-picker');
-picker.setAttribute('locale', 'pt');
-document.getElementById('emoji-popup').appendChild(picker);
-picker.addEventListener('emoji-click', e => {
-  const inp   = document.getElementById('msg-input');
-  const start = inp.selectionStart ?? inp.value.length;
-  const end   = inp.selectionEnd   ?? inp.value.length;
-  const emoji = e.detail.unicode;
-  inp.value   = inp.value.slice(0, start) + emoji + inp.value.slice(end);
-  inp.selectionStart = inp.selectionEnd = start + emoji.length;
-  inp.dispatchEvent(new Event('input'));
-  inp.focus();
-});
-
-/* ── Listener: mensagens ───────────────────────────────── */
-const qMsgs = query(collection(db, 'wpp_messages'), orderBy('createdAt', 'asc'));
-onSnapshot(qMsgs, snap => {
-  window._msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  buildConvs();
-  if (window._activePhone) renderMsgs(window._activePhone);
-});
-
-/* ── Listener: contatos ────────────────────────────────── */
-onSnapshot(collection(db, 'wpp_contacts'), snap => {
-  window._contacts = {};
-  snap.docs.forEach(d => { window._contacts[d.id] = { id: d.id, ...d.data() }; });
-  buildConvs();
-  renderContactList();
-  if (window._activePhone) {
-    const c = window._contacts[window._activePhone];
-    if (c) {
-      const name = c.name || c.pushName || fmtPhone(window._activePhone);
-      document.getElementById('hdr-name').textContent = name;
-      document.getElementById('hdr-av').textContent   = initials(name);
-      const sel = document.getElementById('hdr-status');
-      if (sel) sel.value = c.status || 'open';
-    }
-  }
-});
-</script>
-
-<!-- ═══════════ APP LOGIC ════════════════════════════════════ -->
-<script>
-// ── Estado ───────────────────────────────────────────────────
-let _srv           = 'http://localhost:3000';
-let _sock          = null;
-let _statusFilter  = 'all';
-window._activePhone = null;
-window._msgs        = [];
-window._convs       = {};
-window._contacts    = {};
-
-// Respostas rápidas (chave: '/nome', texto completo)
-const _tmpls = JSON.parse(localStorage.getItem('_tmpls') || '[]');
-
-// ── Sidebar tabs ─────────────────────────────────────────────
-window.setSbTab = function(tab) {
-  document.getElementById('tab-convs').classList.toggle('active', tab === 'convs');
-  document.getElementById('tab-contacts').classList.toggle('active', tab === 'contacts');
-  document.getElementById('convs-panel').style.display = tab === 'convs' ? '' : 'none';
-  document.getElementById('contacts-panel').classList.toggle('active', tab === 'contacts');
-};
-
-// ── Filtro de status ──────────────────────────────────────────
-window.setFilter = function(f) {
-  _statusFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b =>
-    b.classList.toggle('active', b.id === 'filter-' + f));
-  renderConvList();
-};
-
-// ── Conexão com o servidor ───────────────────────────────────
-window.connectServer = function() {
-  const v = document.getElementById('srv-url').value.trim().replace(/\/$/, '');
-  if (v) _srv = v;
-  if (_sock) _sock.disconnect();
-
-  setBadge('waiting', 'Conectando ao servidor...');
-  showQRSpin('Conectando...');
-
-  _sock = io(_srv, { timeout: 6000, reconnectionAttempts: 5 });
-
-  _sock.on('connect',       () => setBadge('waiting', 'Aguardando QR Code...'));
-  _sock.on('connect_error', () => {
-    setBadge('waiting', 'Servidor não encontrado — verifique a URL');
-    showQRSpin('Servidor não encontrado.');
-  });
-
-  _sock.on('qr', dataUrl => {
-    document.getElementById('qr-frame').innerHTML = `<img src="${dataUrl}" alt="QR">`;
-    setBadge('scanning', 'Escaneie com o WhatsApp');
-  });
-
-  _sock.on('status', s => {
-    if      (s === 'connected')    onConnected();
-    else if (s === 'disconnected') onDisconnected();
-    else if (s === 'waiting_qr')   setBadge('scanning', 'Escaneie com o WhatsApp');
-  });
-
-  _sock.on('phone', p => {
-    const el = document.getElementById('tb-phone');
-    el.textContent = '+' + p.replace(/\D/g, '');
-    el.style.display = '';
-  });
-
-  // ── Mensagem em tempo real → Firestore ──────────────────────
-  _sock.on('new_message', async msg => {
-    if (!window._db) return;
-    await window._fbAdd(window._fbCol(window._db, 'wpp_messages'), {
-      phone:     msg.phoneId,
-      pushName:  msg.pushName || '',
-      text:      msg.text     || '',
-      type:      msg.type     || 'text',
-      mediaUrl:  msg.mediaUrl ? _srv + msg.mediaUrl : '',
-      duration:  msg.duration || 0,
-      direction: 'in',
-      status:    'received',
-      createdAt: window._fbTs()
-    });
-    if (msg.phoneId) {
-      const cRef = window._fbDoc(window._db, 'wpp_contacts', msg.phoneId);
-      await window._fbSet(cRef, {
-        phone:    msg.phoneId,
-        pushName: msg.pushName || '',
-        name:     (window._contacts[msg.phoneId]?.name) || msg.pushName || '',
-        lastSeen: window._fbTs()
-      }, { merge: true });
-    }
-    // Som de notificação
-    if (window._activePhone !== msg.phoneId) playNotif();
-  });
-
-  // ── Histórico de 7 dias → writeBatch com deduplicação ───────
-  _sock.on('message_history', async history => {
-    if (!window._db || !window._fbBatch || !history?.length) return;
-    showToast(`Sincronizando ${history.length} mensagens do histórico...`);
-
-    const CHUNK = 440;
-    for (let i = 0; i < history.length; i += CHUNK) {
-      const batch  = window._fbBatch();
-      const slice  = history.slice(i, i + CHUNK);
-      const seen   = new Set();
-
-      slice.forEach(m => {
-        if (!m.msgId || !m.phoneId) return;
-        if (seen.has(m.msgId)) return;
-        seen.add(m.msgId);
-
-        const ref = window._fbDoc(window._db, 'wpp_messages', m.msgId);
-        batch.set(ref, {
-          phone:     m.phoneId,
-          pushName:  m.pushName || '',
-          text:      m.text     || '',
-          type:      m.type     || 'text',
-          mediaUrl:  '',
-          direction: m.direction || 'in',
-          status:    m.direction === 'out' ? 'sent' : 'received',
-          createdAt: window._fbTimestamp.fromMillis(m.timestamp || Date.now())
-        }, { merge: true });
-
-        if (m.pushName) {
-          const cRef = window._fbDoc(window._db, 'wpp_contacts', m.phoneId);
-          batch.set(cRef, {
-            phone:    m.phoneId,
-            pushName: m.pushName,
-            name:     window._contacts[m.phoneId]?.name || m.pushName,
-            lastSeen: window._fbTimestamp.fromMillis(m.timestamp || Date.now())
-          }, { merge: true });
-        }
-      });
-
-      await batch.commit();
-    }
-    showToast(`Histórico carregado: ${history.length} mensagens`);
-  });
-};
-
-function onConnected() {
-  setBadge('ok', 'WhatsApp conectado');
-  setChip('connected', 'Conectado');
-  document.getElementById('qr-overlay').style.display = 'none';
-  document.getElementById('qr-btn').textContent = '● Conectado';
-  document.getElementById('qr-btn').style.color = '#31A24C';
-}
-function onDisconnected() {
-  setChip('disconnected', 'Desconectado');
-  document.getElementById('qr-btn').textContent = 'Escanear QR';
-  document.getElementById('qr-btn').style.color = '';
-}
-function setBadge(type, txt) {
-  document.getElementById('qr-badge').className = 'qr-badge ' + type;
-  document.getElementById('qr-badge-txt').textContent = txt;
-}
-function setChip(type, txt) {
-  document.getElementById('st-chip').className = 'st-chip ' + type;
-  document.getElementById('st-txt').textContent = txt;
-}
-function showQRSpin(msg) {
-  document.getElementById('qr-frame').innerHTML =
-    `<div class="qr-spin-wrap"><div class="qr-spin"></div><span>${esc(msg)}</span></div>`;
-}
-
-// ── Status da conversa ────────────────────────────────────────
-window.setConvStatus = async function(phone, status) {
-  if (!phone || !window._db) return;
-  await window._fbSet(
-    window._fbDoc(window._db, 'wpp_contacts', phone),
-    { status }, { merge: true }
-  );
-  renderConvList();
-};
-
-// ── Conversas ────────────────────────────────────────────────
-function buildConvs() {
-  const map = {};
-  (window._msgs || []).forEach(m => {
-    const p = m.phone; if (!p) return;
-    if (!map[p]) map[p] = { phone: p, msgs: [], unread: 0 };
-    map[p].msgs.push(m);
-    if (m.direction === 'in' && !m.read) map[p].unread++;
-  });
-  window._convs = map;
-
-  // Atualizar contagens de filtro
-  const all  = Object.keys(map).length;
-  let open = 0, pend = 0, res = 0;
-  Object.keys(map).forEach(p => {
-    const s = window._contacts[p]?.status || 'open';
-    if      (s === 'open')     open++;
-    else if (s === 'pending')  pend++;
-    else if (s === 'resolved') res++;
-  });
-  document.getElementById('fc-all').textContent      = all;
-  document.getElementById('fc-open').textContent     = open;
-  document.getElementById('fc-pending').textContent  = pend;
-  document.getElementById('fc-resolved').textContent = res;
-
-  renderConvList();
-}
-
-function contactName(phone) {
-  const c = window._contacts[phone];
-  if (c?.name)     return c.name;
-  if (c?.pushName) return c.pushName;
-  return fmtPhone(phone);
-}
-
-function renderConvList() {
-  const list  = document.getElementById('conv-list');
-  const q     = document.getElementById('search').value.toLowerCase();
-  let convs   = Object.values(window._convs);
-
-  // Filtro de status
-  if (_statusFilter !== 'all') {
-    convs = convs.filter(c => {
-      const s = window._contacts[c.phone]?.status || 'open';
-      return s === _statusFilter;
-    });
-  }
-
-  if (!convs.length) {
-    list.innerHTML = '<div class="sb-empty">Nenhuma conversa aqui.<br>Conecte o WhatsApp para começar.</div>';
-    return;
-  }
-
-  const sorted = convs.sort((a, b) => {
-    const at = a.msgs.at(-1)?.createdAt?.seconds || 0;
-    const bt = b.msgs.at(-1)?.createdAt?.seconds || 0;
-    return bt - at;
-  });
-
-  const items = q
-    ? sorted.filter(c => contactName(c.phone).toLowerCase().includes(q) || c.phone.includes(q))
-    : sorted;
-
-  list.innerHTML = items.map(c => {
-    const last   = c.msgs.at(-1);
-    const name   = contactName(c.phone);
-    const ini    = initials(name);
-    const time   = last?.createdAt ? fmtTime(last.createdAt) : '';
-    const prev   = last
-      ? (last.direction === 'out' ? '↗ ' : '') +
-        (last.type === 'audio' ? '🎤 Áudio' :
-         last.type === 'image' ? '📷 Imagem' : (last.text || ''))
-      : '';
-    const st     = window._contacts[c.phone]?.status || 'open';
-    const active = window._activePhone === c.phone ? ' active' : '';
-    const badge  = c.unread > 0 ? `<div class="conv-badge">${c.unread}</div>` : '';
-    return `
-      <div class="conv-item${active}" onclick="selectConv('${c.phone}')">
-        <div class="av">
-          ${ini}
-          <span class="status-dot ${st}"></span>
+<!-- Modal: Nova Cobrança -->
+<div class="modal-overlay" id="modal-nova-cobranca" onclick="closeModalOutside(event,'modal-nova-cobranca')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Nova Cobrança</div>
+      <div class="modal-close" onclick="closeModal('modal-nova-cobranca')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Cliente</label>
+        <select class="form-control">
+          <option value="">Selecionar…</option>
+          <option>Padaria Boa Vista Ltda</option>
+          <option>Clínica São Lucas S/S</option>
+          <option>Transportes Rápido Eireli</option>
+        </select>
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="form-group">
+          <label class="form-label">Valor</label>
+          <input class="form-control" placeholder="R$ 0,00">
         </div>
-        <div class="conv-info">
-          <div class="conv-name">${esc(name)}</div>
-          <div class="conv-prev">${esc(prev.slice(0, 60))}</div>
+        <div class="form-group">
+          <label class="form-label">Vencimento</label>
+          <input class="form-control" type="date">
         </div>
-        <div class="conv-meta">
-          <div class="conv-time">${time}</div>${badge}
-        </div>
-      </div>`;
-  }).join('');
-}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrição</label>
+        <input class="form-control" placeholder="Ex: Honorários Maio/2025">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Enviar via</label>
+        <select class="form-control">
+          <option>WhatsApp</option>
+          <option>E-mail</option>
+          <option>WhatsApp + E-mail</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-nova-cobranca')">Cancelar</button>
+      <button class="btn btn-accent btn-sm" onclick="closeModal('modal-nova-cobranca');showToast('Cobrança enviada!','success')">Enviar Cobrança</button>
+    </div>
+  </div>
+</div>
 
-// ── Contatos ─────────────────────────────────────────────────
-function renderContactList() {
-  const list = document.getElementById('contact-list');
-  const q    = document.getElementById('contact-search').value.toLowerCase();
-  const all  = Object.values(window._contacts);
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
 
-  if (!all.length) {
-    list.innerHTML = '<div class="sb-empty">Nenhum contato salvo ainda.<br>Mensagens recebidas criam contatos automaticamente.</div>';
-    return;
-  }
-
-  const sorted   = all.sort((a, b) => (a.name || a.pushName || '').localeCompare(b.name || b.pushName || ''));
-  const filtered = q ? sorted.filter(c =>
-    (c.name || c.pushName || '').toLowerCase().includes(q) || (c.phone||'').includes(q)
-  ) : sorted;
-
-  list.innerHTML = filtered.map(c => {
-    const name = c.name || c.pushName || fmtPhone(c.phone);
-    const ini  = initials(name);
-    return `
-      <div class="contact-item" onclick="selectConv('${c.phone}')">
-        <div class="av sm">${ini}</div>
-        <div class="contact-info">
-          <div class="contact-name">${esc(name)}</div>
-          <div class="contact-phone">${fmtPhone(c.phone)}</div>
-        </div>
-        <button class="edit-btn" onclick="event.stopPropagation();openEditContact('${c.phone}')"
-                title="Editar">✏</button>
-      </div>`;
-  }).join('');
-}
-
-// ── Selecionar conversa ───────────────────────────────────────
-window.selectConv = function(phone) {
-  window._activePhone = phone;
-  const name = contactName(phone);
-  document.getElementById('hdr-av').textContent    = initials(name);
-  document.getElementById('hdr-name').textContent  = name;
-  document.getElementById('hdr-phone').textContent = fmtPhone(phone);
-  const st = window._contacts[phone]?.status || 'open';
-  document.getElementById('hdr-status').value = st;
-  document.getElementById('empty-state').style.display = 'none';
-  document.getElementById('active-chat').style.display = 'flex';
-  renderMsgs(phone);
-  renderConvList();
-  closeEmoji();
-  if (document.getElementById('contacts-panel').classList.contains('active'))
-    setSbTab('convs');
-};
-
-// ── Renderizar mensagens ──────────────────────────────────────
-function renderMsgs(phone) {
-  const msgs = window._convs[phone]?.msgs || [];
-  const area = document.getElementById('msgs');
-  if (!area) return;
-  const atBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 80;
-  const name  = contactName(phone);
-  const ini   = initials(name);
-  let html     = '';
-  let lastDate = '';
-  let prevDir  = null;
-
-  msgs.forEach((m, i) => {
-    const ts   = m.createdAt?.seconds
-      ? new Date(m.createdAt.seconds * 1000)
-      : (m.createdAt?.toDate ? m.createdAt.toDate() : new Date());
-    const dStr = ts.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
-    if (dStr !== lastDate) {
-      html    += `<div class="date-sep"><span>${dStr}</span></div>`;
-      lastDate = dStr;
-    }
-    const out    = m.direction === 'out';
-    const time   = ts.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
-    const showAv = !out && (prevDir !== 'in' || i === 0);
-    prevDir = m.direction;
-
-    let content = '';
-    if (m.type === 'audio' && m.mediaUrl) {
-      const aid = 'a' + m.id.replace(/[^a-z0-9]/gi, '');
-      content = `
-        <div class="audio-bubble">
-          <button class="audio-play-btn" onclick="toggleAudio('${aid}')" title="Reproduzir">
-            <svg id="${aid}-ico" viewBox="0 0 24 24">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-          </button>
-          <div class="audio-track">
-            <input id="${aid}-bar" class="audio-bar" type="range"
-                   value="0" min="0" step="0.01"
-                   oninput="seekAudio('${aid}', this.value)">
-            <span id="${aid}-dur" class="audio-duration">
-              ${m.duration ? fmtDur(m.duration) : '0:00'}
-            </span>
-          </div>
-          <audio id="${aid}" class="audio-player-hidden"
-                 src="${m.mediaUrl}"
-                 onended="onAudioEnd('${aid}')"
-                 ontimeupdate="onAudioProgress('${aid}')"></audio>
-        </div>`;
-    } else if (m.type === 'image' && m.mediaUrl) {
-      const caption = m.text && m.text !== '[Imagem]' ? `<span>${esc(m.text)}</span><br>` : '';
-      content = `<img class="img-bubble"
-                      src="${m.mediaUrl}"
-                      alt="Imagem"
-                      onclick="openLightbox('${m.mediaUrl}')"
-                      onerror="this.style.display='none'">${caption}`;
-    } else {
-      content = esc(m.text || '');
-    }
-
-    html += `
-      <div class="msg-row ${out ? 'out' : 'in'}">
-        <div class="msg-av ${out || !showAv ? 'hide' : ''}">${ini}</div>
-        <div class="bubble ${out ? 'out' : 'in'}">
-          ${content}
-          <span class="btime">${time}</span>
-        </div>
-      </div>`;
-  });
-
-  area.innerHTML = html;
-  if (atBottom || msgs.length < 5) area.scrollTop = area.scrollHeight;
-}
-
-// ── Lightbox ──────────────────────────────────────────────────
-window.openLightbox = function(url) {
-  document.getElementById('lightbox-img').src = url;
-  document.getElementById('lightbox').style.display = 'flex';
-};
-
-// ── Controles de áudio ────────────────────────────────────────
-window.toggleAudio = function(aid) {
-  const el  = document.getElementById(aid);
-  const ico = document.getElementById(aid + '-ico');
-  if (!el) return;
-  if (el.paused) {
-    document.querySelectorAll('audio.audio-player-hidden').forEach(a => {
-      if (a.id !== aid && !a.paused) {
-        a.pause();
-        const i = document.getElementById(a.id + '-ico');
-        if (i) i.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
-      }
-    });
-    el.play();
-    ico.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
-  } else {
-    el.pause();
-    ico.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
-  }
-};
-window.onAudioEnd = function(aid) {
-  const ico = document.getElementById(aid + '-ico');
-  const bar = document.getElementById(aid + '-bar');
-  if (ico) ico.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
-  if (bar) bar.value = 0;
-};
-window.onAudioProgress = function(aid) {
-  const el  = document.getElementById(aid);
-  const bar = document.getElementById(aid + '-bar');
-  const dur = document.getElementById(aid + '-dur');
-  if (!el || !bar) return;
-  if (el.duration) {
-    bar.max   = el.duration;
-    bar.value = el.currentTime;
-    if (dur) dur.textContent = fmtDur(Math.floor(el.currentTime));
-  }
-};
-window.seekAudio = function(aid, val) {
-  const el = document.getElementById(aid);
-  if (el) el.currentTime = parseFloat(val);
-};
-
-// ── Gravação de áudio ─────────────────────────────────────────
-let _recorder    = null;
-let _audioChunks = [];
-
-window.toggleRecording = async function() {
-  if (_recorder && _recorder.state === 'recording') {
-    _recorder.stop();
-    return;
-  }
-  if (!window._activePhone) { showToast('Selecione uma conversa primeiro.'); return; }
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mime   = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-                    ? 'audio/webm;codecs=opus' : 'audio/webm';
-    _recorder    = new MediaRecorder(stream, { mimeType: mime });
-    _audioChunks = [];
-    _recorder.ondataavailable = e => { if (e.data.size > 0) _audioChunks.push(e.data); };
-    _recorder.onstop = async () => {
-      stream.getTracks().forEach(t => t.stop());
-      document.getElementById('mic-btn').classList.remove('recording');
-      const blob   = new Blob(_audioChunks, { type: mime });
-      const base64 = await blobToBase64(blob);
-      await sendAudio(window._activePhone, base64.split(',')[1], mime);
-    };
-    _recorder.start();
-    document.getElementById('mic-btn').classList.add('recording');
-    showToast('Gravando... clique no microfone para parar.');
-  } catch (e) {
-    showToast('Microfone indisponível: ' + e.message);
-  }
-};
-
-async function sendAudio(phone, audioBase64, mimetype) {
-  if (!_sock?.connected) { showToast('WhatsApp não conectado.'); return; }
-  try {
-    const r = await fetch(_srv + '/api/send-audio', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, audioBase64, mimetype })
-    });
-    if (!r.ok) throw new Error((await r.json()).error || 'Falha ao enviar');
-    const { mediaUrl } = await r.json();
-    if (window._db) {
-      await window._fbAdd(window._fbCol(window._db, 'wpp_messages'), {
-        phone, text: '[Áudio]', type: 'audio',
-        mediaUrl: _srv + mediaUrl,
-        direction: 'out', status: 'sent',
-        createdAt: window._fbTs()
-      });
-    }
-  } catch (e) { showToast('Erro ao enviar áudio: ' + e.message); }
-}
-
-function blobToBase64(blob) {
-  return new Promise((res, rej) => {
-    const r  = new FileReader();
-    r.onload = () => res(r.result);
-    r.onerror = rej;
-    r.readAsDataURL(blob);
-  });
-}
-
-// ── Emoji ─────────────────────────────────────────────────────
-window.toggleEmoji = function(e) {
-  e.stopPropagation();
-  const popup = document.getElementById('emoji-popup');
-  const isOpen = popup.style.display === 'block';
-  popup.style.display = isOpen ? 'none' : 'block';
-  document.getElementById('emoji-btn').classList.toggle('active', !isOpen);
-};
-function closeEmoji() {
-  document.getElementById('emoji-popup').style.display = 'none';
-  document.getElementById('emoji-btn').classList.remove('active');
-}
-document.addEventListener('click', e => {
-  const popup = document.getElementById('emoji-popup');
-  if (popup.style.display === 'block' &&
-      !popup.contains(e.target) &&
-      e.target.id !== 'emoji-btn' &&
-      !e.target.closest('#emoji-btn')) {
-    closeEmoji();
-  }
-});
-
-// ── Quick replies ─────────────────────────────────────────────
-function showQuickReplies(q) {
-  const popup = document.getElementById('quick-popup');
-  const matches = _tmpls.filter(t => t.key.startsWith(q));
-  if (!matches.length) { popup.style.display = 'none'; return; }
-  popup.innerHTML = matches.map(t =>
-    `<div class="qr-item" onclick="applyQuickReply('${esc(t.text)}')">
-       <span class="qr-key">${esc(t.key)}</span>
-       <span class="qr-text">${esc(t.text.slice(0,60))}</span>
-     </div>`
-  ).join('');
-  popup.style.display = 'block';
-}
-window.applyQuickReply = function(text) {
-  const inp = document.getElementById('msg-input');
-  inp.value = text;
-  inp.style.height = 'auto';
-  inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
-  document.getElementById('send-btn').classList.add('on');
-  document.getElementById('quick-popup').style.display = 'none';
-  inp.focus();
-};
-
-// ── Input ─────────────────────────────────────────────────────
-window.onInputChange = function(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-  document.getElementById('send-btn').classList.toggle('on', el.value.trim().length > 0);
-  const v = el.value;
-  if (v.startsWith('/') && v.length > 1) showQuickReplies(v);
-  else document.getElementById('quick-popup').style.display = 'none';
-};
-window.onMsgKey = e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
-  if (e.key === 'Escape') {
-    document.getElementById('quick-popup').style.display = 'none';
-    closeEmoji();
-  }
-};
-
-// ── Enviar texto ──────────────────────────────────────────────
-window.sendMsg = async function() {
-  const inp  = document.getElementById('msg-input');
-  const text = inp.value.trim();
-  if (!text || !window._activePhone) return;
-  if (!_sock?.connected) { showToast('WhatsApp não conectado.'); return; }
-  inp.value = '';
-  inp.style.height = '';
-  document.getElementById('send-btn').classList.remove('on');
-  document.getElementById('quick-popup').style.display = 'none';
-  try {
-    const r = await fetch(_srv + '/api/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: window._activePhone, text })
-    });
-    if (!r.ok) throw new Error((await r.json()).error || 'Falha');
-    if (window._db) {
-      await window._fbAdd(window._fbCol(window._db, 'wpp_messages'), {
-        phone: window._activePhone, text, type: 'text',
-        direction: 'out', status: 'sent',
-        createdAt: window._fbTs()
-      });
-    }
-  } catch (e) { showToast('Erro: ' + e.message); }
-};
-
-// ── Modal: Nova conversa ──────────────────────────────────────
-window.openNC  = () => document.getElementById('nc-modal').classList.add('open');
-window.closeNC = () => {
-  document.getElementById('nc-modal').classList.remove('open');
-  document.getElementById('nc-name').value = '';
-  document.getElementById('nc-phone').value = '';
-};
-window.startNC = async () => {
-  const name  = document.getElementById('nc-name').value.trim();
-  const phone = document.getElementById('nc-phone').value.replace(/\D/g, '');
-  if (!phone) { showToast('Informe o número.'); return; }
-  if (window._db) {
-    await window._fbSet(window._fbDoc(window._db, 'wpp_contacts', phone), {
-      phone, name: name || '', pushName: '', lastSeen: window._fbTs()
-    }, { merge: true });
-  }
-  if (!window._convs[phone]) window._convs[phone] = { phone, msgs: [], unread: 0 };
-  closeNC();
-  selectConv(phone);
-};
-
-// ── Modal: Editar contato ─────────────────────────────────────
-let _editPhone = null;
-window.openEditContact = function(phone) {
-  _editPhone = phone;
-  const c = window._contacts[phone];
-  document.getElementById('edit-name').value  = c?.name || c?.pushName || '';
-  document.getElementById('edit-phone').value = fmtPhone(phone);
-  document.getElementById('edit-modal').classList.add('open');
-};
-window.closeEdit = () => document.getElementById('edit-modal').classList.remove('open');
-window.saveEdit  = async () => {
-  const name = document.getElementById('edit-name').value.trim();
-  if (!_editPhone || !window._db) return closeEdit();
-  await window._fbSet(window._fbDoc(window._db, 'wpp_contacts', _editPhone),
-    { name }, { merge: true });
-  closeEdit();
-  showToast('Contato atualizado!');
-};
-
-// ── Search ────────────────────────────────────────────────────
-document.getElementById('search').addEventListener('input', renderConvList);
-document.getElementById('contact-search').addEventListener('input', renderContactList);
-
-// ── Som de notificação ────────────────────────────────────────
-function playNotif() {
-  try {
-    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .25);
-    osc.start(); osc.stop(ctx.currentTime + .25);
-  } catch (_) {}
-}
-
-// ── Helpers ───────────────────────────────────────────────────
-function fmtPhone(p) {
-  if (!p) return '—';
-  const d = String(p).replace(/\D/g, '');
-  if (d.startsWith('55') && d.length === 13)
-    return `+55 (${d.slice(2,4)}) ${d.slice(4,9)}-${d.slice(9)}`;
-  if (d.startsWith('55') && d.length === 12)
-    return `+55 (${d.slice(2,4)}) ${d.slice(4,8)}-${d.slice(8)}`;
-  if (d.length > 10) return `+${d.slice(0,2)} ${d.slice(2)}`;
-  return '+' + d;
-}
-function fmtTime(ts) {
-  const d   = ts?.toDate ? ts.toDate() : new Date((ts?.seconds || 0) * 1000);
-  const now = new Date();
-  if (d.toDateString() === now.toDateString())
-    return d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
-  if (now - d < 604800000)
-    return d.toLocaleDateString('pt-BR', { weekday:'short' });
-  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
-}
-function fmtDur(s) {
-  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
-  return `${m}:${String(sec).padStart(2,'0')}`;
-}
-function initials(name) {
-  return (name || '').split(' ').slice(0,2).map(w => w[0] || '').join('').toUpperCase() || '?';
-}
-function esc(s) {
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._t);
-  t._t = setTimeout(() => t.classList.remove('show'), 3500);
-}
-window.showToast = showToast;
-window.fmtPhone  = fmtPhone;
-
-// Auto-connect
-connectServer();
-</script>
+<script src="assets/js/app.js"></script>
 </body>
 </html>
