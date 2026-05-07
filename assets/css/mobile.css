@@ -1,0 +1,251 @@
+/* ═══════════════════════════════════════════════════════════════
+   CORRÊA ASSESSORIA · MOBILE-FIRST RESPONSIVE
+   Breakpoints: sm < 640  md < 768  lg < 1024
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Variáveis mobile ────────────────────────────────────────── */
+:root {
+  --bottom-nav-h: 64px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ≤ 1024px  — Sidebar colapsa automaticamente
+════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  #sidebar { width: var(--sidebar-w-col); }
+  #sidebar .sb-logo-text,
+  #sidebar .nav-label,
+  #sidebar .nav-badge,
+  #sidebar .sb-section-label,
+  #sidebar .sb-user-info { display: none; }
+  #sidebar .nav-item { justify-content: center; padding: 10px; }
+  #sidebar .nav-item.active::before { display: none; }
+  #sidebar .sb-collapse-btn { display: none; }
+  #sidebar .sb-user { justify-content: center; }
+
+  .tb-search { flex: 0 0 220px; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ≤ 768px  — Mobile: sidebar vira drawer lateral
+════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Sidebar como drawer ───────────────────────────────────── */
+  #sidebar {
+    position: fixed; inset: 0 auto 0 0; z-index: 500;
+    width: var(--sidebar-w) !important;
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1), box-shadow .28s;
+    box-shadow: none;
+  }
+  #sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-lg), 4px 0 40px rgba(0,0,0,.18);
+  }
+  /* Restaura labels dentro do drawer */
+  #sidebar .sb-logo-text,
+  #sidebar .nav-label,
+  #sidebar .nav-badge,
+  #sidebar .sb-section-label,
+  #sidebar .sb-user-info { display: block !important; }
+  #sidebar .nav-item { justify-content: flex-start !important; padding: 9px 16px 9px 18px !important; }
+  #sidebar .nav-badge { display: inline-flex !important; }
+  #sidebar .sb-user { justify-content: flex-start !important; }
+  #sidebar .sb-collapse-btn { display: none !important; }
+  #sidebar .nav-item.active::before { display: block !important; }
+
+  /* ── Overlay escuro ────────────────────────────────────────── */
+  #sidebar-overlay {
+    display: block;
+    position: fixed; inset: 0; z-index: 499;
+    background: rgba(0,0,0,.45); backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none;
+    transition: opacity .28s;
+  }
+  #sidebar-overlay.visible { opacity: 1; pointer-events: all; }
+
+  /* ── Main ocupa tudo (sem sidebar fixa) ────────────────────── */
+  #main { width: 100%; }
+
+  /* ── Topbar mobile ─────────────────────────────────────────── */
+  #topbar { padding: 0 14px; gap: 8px; }
+  #hamburger-btn { display: flex; }
+  .tb-search { display: none; }
+  .tb-breadcrumb { font-size: 14px; font-weight: 700; color: var(--gray-900); }
+  .tb-breadcrumb span, .tb-breadcrumb > span:first-child { display: none; }
+  .tb-breadcrumb > span:nth-child(2) { display: none; }   /* › separador */
+
+  /* ── Bottom nav ────────────────────────────────────────────── */
+  #bottom-nav {
+    display: flex;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: var(--bottom-nav-h); z-index: 400;
+    background: var(--white);
+    border-top: 1px solid var(--gray-200);
+    box-shadow: 0 -4px 16px rgba(0,0,0,.07);
+  }
+  .bn-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px;
+    cursor: pointer; color: var(--gray-400);
+    transition: color var(--t), background var(--t);
+    padding: 6px 4px; position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bn-item.active { color: var(--brand-700); }
+  .bn-item.active::before {
+    content: ''; position: absolute; top: 0; left: 20%; right: 20%;
+    height: 2px; border-radius: 0 0 3px 3px;
+    background: var(--brand-700);
+  }
+  .bn-item svg { flex-shrink: 0; }
+  .bn-label { font-size: 10px; font-weight: 600; letter-spacing: .2px; line-height: 1; }
+  .bn-badge {
+    position: absolute; top: 6px; right: calc(50% - 18px);
+    background: var(--danger); color: var(--white);
+    font-size: 9px; font-weight: 700; padding: 1px 4px;
+    border-radius: 20px; border: 1.5px solid var(--white);
+  }
+
+  /* ── Content padding com bottom nav ───────────────────────── */
+  #content { padding-bottom: var(--bottom-nav-h); }
+  .page { padding: 16px 14px calc(var(--bottom-nav-h) + 16px); }
+
+  /* ── Page header ───────────────────────────────────────────── */
+  .page-header { flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .page-header > div:last-child { width: 100%; }
+  .page-header .flex { width: 100%; }
+  .page-header .btn { flex: 1; justify-content: center; }
+  .page-title { font-size: 18px; }
+
+  /* ── Quick stats: 2 col ────────────────────────────────────── */
+  .quick-stats {
+    grid-template-columns: repeat(2, 1fr);
+    margin-bottom: 16px;
+  }
+  .qs-item:nth-child(2) { border-right: none; }
+  .qs-item:nth-child(1),
+  .qs-item:nth-child(2) { border-bottom: 1px solid var(--gray-100); }
+
+  /* ── KPIs: 2 col ───────────────────────────────────────────── */
+  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; gap: 12px; }
+  .kpi-value { font-size: 22px; }
+
+  /* ── Cards e grids ─────────────────────────────────────────── */
+  .grid-2, .grid-3 { grid-template-columns: 1fr !important; gap: 14px; }
+  .card-header { padding: 14px 16px; }
+  .card-body   { padding: 14px 16px; }
+  .card-footer { padding: 12px 16px; }
+  .card-padded { padding: 16px; }
+
+  /* ── Prazos: simplifica ────────────────────────────────────── */
+  .prazo-clients { display: none; }
+
+  /* ── Tabelas → scroll horizontal ──────────────────────────── */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 620px; }
+  /* Oculta colunas menos críticas */
+  .data-table th:nth-child(4),
+  .data-table td:nth-child(4),
+  .data-table th:nth-child(6),
+  .data-table td:nth-child(6)  { display: none; }
+
+  /* ── Client filters: scroll horizontal ────────────────────── */
+  .client-filters { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+  .client-filters::-webkit-scrollbar { display: none; }
+  .filter-tab { white-space: nowrap; flex-shrink: 0; }
+  .client-filters > div:last-child { display: none; } /* hide select no mobile */
+
+  /* ── Calendário: menor ─────────────────────────────────────── */
+  .cal-grid { gap: 2px; }
+  .cal-cell { min-height: 52px; padding: 4px; }
+  .cal-event { font-size: 9px; padding: 1px 3px; }
+  .cal-cell-num { font-size: 11px; }
+
+  /* ── Obrigações: simplifica ────────────────────────────────── */
+  .obrig-scope { display: none; }
+
+  /* ── Kanban: scroll horizontal ─────────────────────────────── */
+  #page-tarefas .flex { gap: 12px; }
+  .client-card { padding: 12px; }
+
+  /* ── Documentos ────────────────────────────────────────────── */
+  .doc-list { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .doc-upload-zone { padding: 24px 16px; }
+
+  /* ── Financeiro summary: 1 col ─────────────────────────────── */
+  .fin-summary { grid-template-columns: 1fr; }
+  .fin-sum-cell { border-right: none !important; border-bottom: 1px solid var(--gray-200); }
+  .fin-sum-cell:last-child { border-bottom: none; }
+  .fin-sum-value { font-size: 22px; }
+
+  /* ── Modais: full-screen no mobile ────────────────────────── */
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal {
+    max-width: 100%; width: 100%; max-height: 92vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    transform: translateY(24px);
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  /* ── Toast: full-width ─────────────────────────────────────── */
+  .toast-container { left: 12px; right: 12px; bottom: calc(var(--bottom-nav-h) + 10px); }
+  .toast { min-width: unset; max-width: 100%; width: 100%; }
+
+  /* ── Configurações equipe ──────────────────────────────────── */
+  #page-config .grid-2 { grid-template-columns: 1fr !important; }
+
+  /* ── WhatsApp iframe ───────────────────────────────────────── */
+  #page-whatsapp .card { height: calc(100vh - 170px); }
+
+  /* ── Relatórios: 1 col ─────────────────────────────────────── */
+  #page-relatorios .grid-3 { grid-template-columns: 1fr !important; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ≤ 400px  — Smartphones pequenos
+════════════════════════════════════════════════════════════════ */
+@media (max-width: 400px) {
+  .grid-4 { grid-template-columns: 1fr !important; }
+  .kpi-card { padding: 14px 16px; gap: 8px; }
+  .kpi-value { font-size: 20px; }
+  .quick-stats { grid-template-columns: 1fr; }
+  .qs-item { border-right: none; border-bottom: 1px solid var(--gray-100); }
+  .qs-item:last-child { border-bottom: none; }
+  .doc-list { grid-template-columns: 1fr; }
+  .page { padding: 12px 12px calc(var(--bottom-nav-h) + 12px); }
+  .page-title { font-size: 16px; }
+  .cal-cell { min-height: 40px; }
+  .cal-event { display: none; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Desktop: garante que bottom-nav e overlay nunca aparecem
+════════════════════════════════════════════════════════════════ */
+@media (min-width: 769px) {
+  #bottom-nav     { display: none !important; }
+  #sidebar-overlay { display: none !important; }
+  #hamburger-btn  { display: none !important; }
+}
+
+/* ── Touch improvements ──────────────────────────────────────── */
+@media (hover: none) {
+  .btn:hover      { transform: none; }
+  .kpi-card:hover { box-shadow: var(--shadow-sm); }
+  .nav-item:hover { background: transparent; }
+  /* Áreas de toque maiores */
+  .btn { min-height: 40px; }
+  .nav-item { min-height: 44px; }
+  .bn-item  { min-height: 44px; }
+  .tb-icon-btn { min-height: 40px; min-width: 40px; }
+}
+
+/* ── Safe area (iPhone notch / home bar) ────────────────────── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  #bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
+  }
+  #content { padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom)); }
+}
